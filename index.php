@@ -58,7 +58,7 @@ try {
             
             if ($projectId > 0) {
                 // Получаем default_price из компании
-                $defaultPrice = $company['UF_CRM_PRICE_DEFAULT'] ?? null;
+                $defaultPrice = $company['UF_CRM_DEFAULT_RATE'] ?? null;
                 
                 $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
                 

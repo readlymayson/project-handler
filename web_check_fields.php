@@ -9,6 +9,12 @@
  * http://your-domain.com/web_check_fields.php?action=list
  */
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', 'logs/error.log');
+error_reporting(E_ALL);
+
 require_once 'config.php';
 require_once 'set.php';
 require_once 'UF_CRM_FieldChecker.php';
@@ -262,7 +268,7 @@ try {
                 $content .= '<pre>' . json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . '</pre>';
                 $content .= '</details>';
                 
-                $types = $result['result'] ?? [];
+                $types = $result['result']['types'] ?? [];
                 
                 if (empty($types)) {
                     $content .= '<div class="warning">⚠️ Типы полей не найдены</div>';
@@ -277,11 +283,8 @@ try {
                     
                     foreach ($types as $type) {
                         $content .= '<div class="field-info">';
-                        $content .= "<p><strong>ID:</strong> <code>{$type['ID']}</code></p>";
-                        $content .= "<p><strong>Название:</strong> {$type['NAME']}</p>";
-                        if (!empty($type['DESCRIPTION'])) {
-                            $content .= "<p><strong>Описание:</strong> {$type['DESCRIPTION']}</p>";
-                        }
+                        $content .= "<p><strong>ID:</strong> <code>{$type['userTypeId']}</code></p>";
+                        $content .= "<p><strong>Название:</strong> {$type['description']}</p>";
                         $content .= '</div>';
                     }
                 }
