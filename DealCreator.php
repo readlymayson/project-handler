@@ -202,7 +202,7 @@ class DealCreator
             'contact_id' => null, // У компаний нет контактов напрямую
             'company_id' => $company['ID'] ?? null,
             'title' => $company['TITLE'] ?? '',
-            'default_price' => $company['UF_CRM_PRICE_DEFAULT'] ?? null
+            'default_price' => $company['UF_CRM_DEFAULT_RATE'] ?? null
         ];
     }
 

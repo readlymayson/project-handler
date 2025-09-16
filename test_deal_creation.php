@@ -42,7 +42,7 @@ try {
     // Тестируем функцию извлечения ID проекта
     echo "<h3>Тестирование функции извлечения ID проекта</h3>\n";
     $testLinks = [
-        '123' => 123,
+        '168' => 168,
         'https://akvilon-marketing.bitrix24.ru/workgroups/group/456/' => 456,
         '/workgroups/group/789/' => 789,
         'group_id=101' => 101,
@@ -85,7 +85,7 @@ try {
     
     // Получаем данные о времени по проекту
     echo "<h4>Получение данных о времени по проекту...</h4>\n";
-    $defaultPrice = $testCompany['UF_CRM_PRICE_DEFAULT'] ?? null;
+    $defaultPrice = $testCompany['UF_CRM_DEFAULT_RATE'] ?? null;
     echo "<p>Дефолтная цена из компании: " . ($defaultPrice ?? 'не задана') . " руб/ч</p>\n";
     
     $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
