@@ -155,6 +155,7 @@ class DealCreator
                 'message' => 'Сделка "Работы за предыдущий месяц" успешно создана в воронке ' . MONTHLY_WORK_FUNNEL_ID
             ]);
 
+
             return [
                 'status' => 'success',
                 'deal_id' => $newDealId,
@@ -285,8 +286,6 @@ class DealCreator
             'BEGINDATE' => $startDate->format('Y-m-d'), // Дата начала
             'CONTACT_ID' => $clientInfo['contact_id'], // Клиент
             'COMPANY_ID' => $clientInfo['company_id'], // Компания
-            'TYPE_ID' => DEAL_TYPES['WORK_BY_HOURS'], // Тип сделки "работа по часам"
-            'SOURCE_ID' => DEAL_SOURCES['EXISTING_CLIENT'], // Источник "существующий клиент"
             'ASSIGNED_BY_ID' => $projectManager, // Ответственный
             'COMMENTS' => $comment, // Комментарий с разбивкой времени
             'UF_CRM_PROJECT_LINK' => $company['UF_CRM_PROJECT_LINK'], // Ссылка на проект
@@ -391,7 +390,10 @@ class DealCreator
         $method = 'tasks.task.list';
         $allTasks = [];
         $start = 0;
-        $batchCount = 0;
+
+        $lastMonthFirstDay = (new DateTime('first day of last month'))
+            ->setTime(0, 0, 0)
+            ->format('Y-m-d\TH:i:sP');
 
         $lastMonthEnd = (new DateTime('last day of last month'))
             ->setTime(23, 59, 59)
@@ -400,43 +402,54 @@ class DealCreator
         $this->logger->log([
             'action' => 'get_project_tasks_start',
             'project_id' => $projectId,
-            'last_month_end' => $lastMonthEnd
+            'last_month_end' => $lastMonthEnd,
+            'last_month_first_day' => $lastMonthFirstDay
         ]);
 
         do {
-            $params = [
+            $paramsUnfinished = [
                 'filter' => [
                     'GROUP_ID' => $projectId,
-                    '>CLOSED_DATE' => $lastMonthEnd,
+                    'CLOSED_DATE' => null,
+                    '!REAL_STATUS' => 5
                 ],
                 'select' => ['ID', 'TITLE', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS', 'CLOSED_DATE'],
                 'start' => $start
             ];
 
-            // Добавляем задержку между батчами (кроме первого)
-            if ($batchCount > 0) {
-                batchDelay();
-            }
+            $paramsFinished = [
+                'filter' => [
+                    'GROUP_ID' => $projectId,
+                    '>CLOSED_DATE' => $lastMonthFirstDay,
+                ],
+                'select' => ['ID', 'TITLE', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS', 'CLOSED_DATE'],
+                'start' => $start
+            ];
 
-            $response = $this->call->callBitrix24API($method, $params);
-            $tasks = $response['result']['tasks'] ?? [];
+            $responseUnfinished = $this->call->callBitrix24API($method, $paramsUnfinished);
+            $tasksUnfinished = $responseUnfinished['result']['tasks'] ?? [];
+
+            $responseFinished = $this->call->callBitrix24API($method, $paramsFinished);
+            $tasksFinished = $responseFinished['result']['tasks'] ?? [];
+
+            $tasks = array_merge($tasksUnfinished, $tasksFinished);
             $allTasks = array_merge($allTasks, $tasks);
-            $start += 50;
-            $batchCount++;
 
             $this->logger->log([
                 'action' => 'get_project_tasks_batch',
-                'batch_number' => $batchCount,
+                'batch_number' => ($start / 50) + 1,
                 'tasks_in_batch' => count($tasks),
+                'unfinished_count' => count($tasksUnfinished),
+                'finished_count' => count($tasksFinished),
                 'total_tasks_so_far' => count($allTasks)
             ]);
 
-        } while (!empty($tasks) && count($tasks) >= 50);
+            $start += 50;
+        } while ((!empty($tasksUnfinished) || !empty($tasksFinished)) && count($tasks) >= 50);
 
         $this->logger->log([
             'action' => 'get_project_tasks_complete',
             'project_id' => $projectId,
-            'total_batches' => $batchCount,
             'total_tasks' => count($allTasks)
         ]);
 
