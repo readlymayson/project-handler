@@ -22,16 +22,6 @@ define('FUNNEL_STAGES', [
     'APOLOGY' => 'C2:APOLOGY' // Анализ причины провала
 ]);
 
-// ID типов сделок
-define('DEAL_TYPES', [
-    'WORK_BY_HOURS' => 'WORK_BY_HOURS' // Работа по часам
-]);
-
-// ID источников
-define('DEAL_SOURCES', [
-    'EXISTING_CLIENT' => 'EXISTING_CLIENT' // Существующий клиент
-]);
-
 // Настройки округления времени
 define('MIN_HOUR_ROUNDING', 1); // Минимальное округление до часа
 define('ROUNDING_THRESHOLD', 0.1); // Порог для округления (10 минут)
@@ -52,6 +42,13 @@ define('NOTIFY_USERS', [1]); // ID пользователей для уведо�
 // Настройки проверки дубликатов
 define('CHECK_DUPLICATES', true); // Проверять дубликаты сделок
 define('DUPLICATE_CHECK_DAYS', 30); // Период проверки дубликатов в днях
+
+// Настройки оптимизации API вызовов
+define('API_DELAY_BETWEEN_CALLS', 0.5); // Задержка между API вызовами в секундах
+define('API_DELAY_BETWEEN_BATCHES', 1.0); // Задержка между батчами в секундах
+define('API_TIMEOUT', 30); // Таймаут для API вызовов в секундах
+define('API_MAX_RETRIES', 3); // Максимальное количество повторов при ошибке
+define('API_RETRY_DELAY', 2.0); // Задержка перед повтором в секундах
 
 /**
  * Получить тариф для роли из поля UF_CRM_PRICE_DEFAULT сделки
@@ -77,5 +74,27 @@ function getProjectSettings($projectId): array
         'exclude_roles' => [],
         'additional_roles' => []
     ];
+}
+
+/**
+ * Функция задержки между API вызовами
+ */
+function apiDelay($seconds = null): void
+{
+    if ($seconds === null) {
+        $seconds = API_DELAY_BETWEEN_CALLS;
+    }
+    
+    if ($seconds > 0) {
+        usleep($seconds * 1000000); // Конвертируем секунды в микросекунды
+    }
+}
+
+/**
+ * Функция задержки между батчами
+ */
+function batchDelay(): void
+{
+    apiDelay(API_DELAY_BETWEEN_BATCHES);
 }
 ?>

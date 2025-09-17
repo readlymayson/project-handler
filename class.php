@@ -188,7 +188,7 @@ class ProjectCheck
                 'filter' => [
                     '!UF_CRM_PROJECT_LINK' => [null, '', false],
                 ],
-                'select' => ['ID', 'TITLE', 'UF_CRM_PROJECT_LINK', 'UF_CRM_PRICE_DEFAULT', 'ASSIGNED_BY_ID', 'UF_CRM_HOURS_LIMIT', 'UF_CRM_NOTIFY_DATE', 'UF_CRM_EXTRANET_USER'],
+                'select' => ['ID', 'TITLE', 'UF_CRM_PROJECT_LINK', 'UF_CRM_DEFAULT_RATE', 'ASSIGNED_BY_ID', 'UF_CRM_HOURS_LIMIT', 'UF_CRM_NOTIFY_DATE', 'UF_CRM_EXTRANET_USER'],
                 'start' => $start
             ];
 

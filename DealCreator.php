@@ -6,6 +6,7 @@ class DealCreator
 {
     private Usual $call;
     private Logger $logger;
+    private array $userRoleCache = []; // Кэш для ролей пользователей
 
     public function __construct($call, Logger $logger)
     {
@@ -180,6 +181,9 @@ class DealCreator
      */
     private function getProjectInfo($projectId): array
     {
+        // Добавляем задержку перед API вызовом
+        apiDelay();
+        
         $result = $this->call->callBitrix24API('sonet_group.get', [
             'FILTER' => ['ID' => $projectId]
         ]);
@@ -192,6 +196,9 @@ class DealCreator
      */
     public function getClientInfo($companyId): array
     {
+        // Добавляем задержку перед API вызовом
+        apiDelay();
+        
         $result = $this->call->callBitrix24API('crm.company.get', [
             'id' => $companyId
         ]);
@@ -211,6 +218,9 @@ class DealCreator
      */
     private function getProjectManager(): int
     {
+        // Добавляем задержку перед API вызовом
+        apiDelay();
+        
         // Получаем пользователей отдела проект-менеджеры
         $result = $this->call->callBitrix24API('department.get', []);
         $departments = $result['result'] ?? [];
@@ -225,6 +235,9 @@ class DealCreator
         }
 
         if ($projectManagerDeptId) {
+            // Добавляем задержку перед вторым API вызовом
+            apiDelay();
+            
             $usersResult = $this->call->callBitrix24API('user.get', [
                 'filter' => ['UF_DEPARTMENT' => $projectManagerDeptId, 'ACTIVE' => 'Y']
             ]);
@@ -373,15 +386,22 @@ class DealCreator
     /**
      * Получает задачи проекта за предыдущий месяц
      */
-    private function getProjectTasks($projectId): array
+    public function getProjectTasks($projectId): array
     {
         $method = 'tasks.task.list';
         $allTasks = [];
         $start = 0;
+        $batchCount = 0;
 
         $lastMonthEnd = (new DateTime('last day of last month'))
             ->setTime(23, 59, 59)
             ->format('Y-m-d\TH:i:sP');
+
+        $this->logger->log([
+            'action' => 'get_project_tasks_start',
+            'project_id' => $projectId,
+            'last_month_end' => $lastMonthEnd
+        ]);
 
         do {
             $params = [
@@ -393,11 +413,32 @@ class DealCreator
                 'start' => $start
             ];
 
+            // Добавляем задержку между батчами (кроме первого)
+            if ($batchCount > 0) {
+                batchDelay();
+            }
+
             $response = $this->call->callBitrix24API($method, $params);
             $tasks = $response['result']['tasks'] ?? [];
             $allTasks = array_merge($allTasks, $tasks);
             $start += 50;
+            $batchCount++;
+
+            $this->logger->log([
+                'action' => 'get_project_tasks_batch',
+                'batch_number' => $batchCount,
+                'tasks_in_batch' => count($tasks),
+                'total_tasks_so_far' => count($allTasks)
+            ]);
+
         } while (!empty($tasks) && count($tasks) >= 50);
+
+        $this->logger->log([
+            'action' => 'get_project_tasks_complete',
+            'project_id' => $projectId,
+            'total_batches' => $batchCount,
+            'total_tasks' => count($allTasks)
+        ]);
 
         return $allTasks;
     }
@@ -409,6 +450,9 @@ class DealCreator
     {
         $method = 'task.elapseditem.getlist';
         $params = ['TASKID' => $taskId];
+        
+        // Добавляем задержку перед каждым API вызовом
+        apiDelay();
         
         $response = $this->call->callBitrix24API($method, $params);
         $elapsedItems = $response['result'] ?? [];
@@ -458,13 +502,28 @@ class DealCreator
             return 'Неизвестно';
         }
 
+        // Проверяем кэш
+        if (isset($this->userRoleCache[$userId])) {
+            return $this->userRoleCache[$userId];
+        }
+
+        // Добавляем задержку перед API вызовом
+        apiDelay();
+
         // Получаем информацию о пользователе
         $result = $this->call->callBitrix24API('user.get', [
             'filter' => ['ID' => $userId]
         ]);
 
         $user = $result['result'][0] ?? [];
-        $userName = $user['NAME'] . ' ' . $user['LAST_NAME'];
+        $userName = trim(($user['NAME'] ?? '') . ' ' . ($user['LAST_NAME'] ?? ''));
+        
+        if (empty($userName)) {
+            $userName = 'Пользователь #' . $userId;
+        }
+        
+        // Кэшируем результат
+        $this->userRoleCache[$userId] = $userName;
         
         // Здесь можно добавить логику определения роли по должности или отделу
         // Пока возвращаем имя пользователя
