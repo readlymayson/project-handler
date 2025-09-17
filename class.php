@@ -34,8 +34,8 @@ class ProjectCheck
         $allTasks = [];
         $start = 0;
 
-        $lastMonthEnd = (new DateTime('last day of last month'))
-            ->setTime(23, 59, 59)
+        $lastMonthFirstDay = (new DateTime('first day of last month'))
+            ->setTime(0, 0, 0)
             ->format('Y-m-d\TH:i:sP');
 
         do {
@@ -52,7 +52,7 @@ class ProjectCheck
             $paramsFinished = [
                 'filter' => [
                     'GROUP_ID' => $projectId,
-                    '>CLOSED_DATE' => $lastMonthEnd,
+                    '>CLOSED_DATE' => $lastMonthFirstDay,
                 ],
                 'select' => ['ID', 'TITLE', 'TIME_ESTIMATE', 'TIME_SPENT_IN_LOGS', 'CLOSED_DATE'],
                 'start' => $start

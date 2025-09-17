@@ -37,23 +37,24 @@ try {
     $check = new ProjectCheck($call, $logger);
     $dealCreator = new DealCreator($call, $logger);
 
-    echo "<h2>Тестирование создания сделок 'Работы за предыдущий месяц'</h2>\n";
+    echo "========================================\n";
+    echo "ТЕСТИРОВАНИЕ СОЗДАНИЯ СДЕЛОК\n";
+    echo "'Работы за предыдущий месяц'\n";
+    echo "========================================\n\n";
     
     // Показываем настройки оптимизации
-    echo "<div style='background-color: #f0f8ff; padding: 10px; margin: 10px 0; border-left: 4px solid #007cba;'>\n";
-    echo "<h4>⚙️ Настройки оптимизации API:</h4>\n";
-    echo "<ul>\n";
-    echo "<li><strong>Задержка между API вызовами:</strong> " . API_DELAY_BETWEEN_CALLS . " сек</li>\n";
-    echo "<li><strong>Задержка между батчами:</strong> " . API_DELAY_BETWEEN_BATCHES . " сек</li>\n";
-    echo "<li><strong>Таймаут API:</strong> " . API_TIMEOUT . " сек</li>\n";
-    echo "<li><strong>Максимум повторов:</strong> " . API_MAX_RETRIES . "</li>\n";
-    echo "<li><strong>Задержка перед повтором:</strong> " . API_RETRY_DELAY . " сек</li>\n";
-    echo "</ul>\n";
-    echo "<p><em>Эти настройки помогают избежать ошибки 504 (Gateway Timeout)</em></p>\n";
-    echo "</div>\n";
+    echo "⚙️ НАСТРОЙКИ ОПТИМИЗАЦИИ API:\n";
+    echo "----------------------------------------\n";
+    echo "• Задержка между API вызовами: " . API_DELAY_BETWEEN_CALLS . " сек\n";
+    echo "• Задержка между батчами: " . API_DELAY_BETWEEN_BATCHES . " сек\n";
+    echo "• Таймаут API: " . API_TIMEOUT . " сек\n";
+    echo "• Максимум повторов: " . API_MAX_RETRIES . "\n";
+    echo "• Задержка перед повтором: " . API_RETRY_DELAY . " сек\n";
+    echo "\nЭти настройки помогают избежать ошибки 504 (Gateway Timeout)\n\n";
     
     // Тестируем функцию извлечения ID проекта
-    echo "<h3>Тестирование функции извлечения ID проекта</h3>\n";
+    echo "ТЕСТИРОВАНИЕ ФУНКЦИИ ИЗВЛЕЧЕНИЯ ID ПРОЕКТА\n";
+    echo "========================================\n";
     $testLinks = [
         '168' => 168,
         'https://akvilon-marketing.bitrix24.ru/workgroups/group/456/' => 456,
@@ -65,20 +66,19 @@ try {
         'no numbers here' => 0
     ];
     
-    echo "<ul>\n";
     foreach ($testLinks as $link => $expectedId) {
         $extractedId = $dealCreator->extractProjectId($link);
         $status = $extractedId === $expectedId ? '✅' : '❌';
-        echo "<li>$status '$link' → $extractedId (ожидалось: $expectedId)</li>\n";
+        echo "$status '$link' → $extractedId (ожидалось: $expectedId)\n";
     }
-    echo "</ul>\n";
+    echo "\n";
     
     // Получаем компании с проектами
     $companies = $check->getCompaniesWithProjectLink();
-    echo "<p>Найдено компаний с проектами: " . count($companies) . "</p>\n";
+    echo "Найдено компаний с проектами: " . count($companies) . "\n\n";
     
     if (empty($companies)) {
-        echo "<p>Нет компаний с привязанными проектами для тестирования.</p>\n";
+        echo "❌ Нет компаний с привязанными проектами для тестирования.\n";
         exit;
     }
     
@@ -87,27 +87,32 @@ try {
     $projectLink = $testCompany['UF_CRM_PROJECT_LINK'] ?? '';
     $projectId = $dealCreator->extractProjectId($projectLink);
     
-    echo "<h3>Тестирование для компании #{$testCompany['ID']} - {$testCompany['TITLE']}</h3>\n";
-    echo "<p>Ссылка на проект: $projectLink</p>\n";
-    echo "<p>Извлеченный ID проекта: $projectId</p>\n";
+    echo "ТЕСТИРОВАНИЕ ДЛЯ КОМПАНИИ\n";
+    echo "========================\n";
+    echo "ID: #{$testCompany['ID']}\n";
+    echo "Название: {$testCompany['TITLE']}\n";
+    echo "Ссылка на проект: $projectLink\n";
+    echo "Извлеченный ID проекта: $projectId\n\n";
     
     if ($projectId == 0) {
-        echo "<p>У компании не указана ссылка на проект или не удалось извлечь ID.</p>\n";
+        echo "❌ У компании не указана ссылка на проект или не удалось извлечь ID.\n";
         exit;
     }
     
     // Получаем данные о времени по проекту
-    echo "<h4>Получение данных о времени по проекту...</h4>\n";
+    echo "ПОЛУЧЕНИЕ ДАННЫХ О ВРЕМЕНИ ПО ПРОЕКТУ\n";
+    echo "====================================\n";
     $defaultPrice = $testCompany['UF_CRM_DEFAULT_RATE'] ?? null;
-    echo "<p>Дефолтная цена из компании: " . ($defaultPrice ?? 'не задана') . " руб/ч</p>\n";
+    echo "Дефолтная цена из компании: " . ($defaultPrice ?? 'не задана') . " руб/ч\n\n";
     
     // Получаем детальную информацию о задачах
-    echo "<p>⏳ Получение задач проекта (это может занять некоторое время)...</p>\n";
+    echo "⏳ Получение задач проекта (это может занять некоторое время)...\n";
     $tasks = $dealCreator->getProjectTasks($projectId);
     $tasksCount = count($tasks);
     
-    echo "<h5>📊 Статистика задач:</h5>\n";
-    echo "<p><strong>Всего найдено задач:</strong> $tasksCount</p>\n";
+    echo "\n📊 СТАТИСТИКА ЗАДАЧ:\n";
+    echo "-------------------\n";
+    echo "Всего найдено задач: $tasksCount\n\n";
     
     // Логируем информацию о задачах
     $logger->log([
@@ -119,9 +124,10 @@ try {
     ]);
     
     if ($tasksCount > 0) {
-        echo "<h5>📋 Детали задач:</h5>\n";
-        echo "<table border='1' style='border-collapse: collapse; width: 100%;'>\n";
-        echo "<tr><th>ID</th><th>Название</th><th>Время в логах</th><th>Оценка времени</th><th>Дата закрытия</th></tr>\n";
+        echo "📋 ДЕТАЛИ ЗАДАЧ:\n";
+        echo "================\n";
+        echo sprintf("%-8s %-50s %-15s %-15s %-20s\n", "ID", "Название", "Время в логах", "Оценка времени", "Дата закрытия");
+        echo str_repeat("-", 108) . "\n";
         
         $totalTimeInLogs = 0;
         $totalTimeEstimate = 0;
@@ -134,13 +140,14 @@ try {
             $totalTimeInLogs += $timeSpent;
             $totalTimeEstimate += $timeEstimate;
             
-            echo "<tr>";
-            echo "<td>{$task['ID']}</td>";
-            echo "<td>" . htmlspecialchars($task['TITLE']) . "</td>";
-            echo "<td>{$timeSpent} сек</td>";
-            echo "<td>{$timeEstimate} сек</td>";
-            echo "<td>{$closedDate}</td>";
-            echo "</tr>\n";
+            $title = mb_substr($task['TITLE'], 0, 47) . (mb_strlen($task['TITLE']) > 47 ? '...' : '');
+            echo sprintf("%-8s %-50s %-15s %-15s %-20s\n", 
+                $task['ID'], 
+                $title, 
+                $timeSpent . ' сек', 
+                $timeEstimate . ' сек', 
+                $closedDate
+            );
             
             // Логируем детали каждой задачи
             $logger->log([
@@ -153,14 +160,14 @@ try {
             ]);
         }
         
-        echo "</table>\n";
+        echo "\n";
         
         // Конвертируем секунды в часы для отображения
         $totalHoursInLogs = round($totalTimeInLogs / 3600, 2);
         $totalHoursEstimate = round($totalTimeEstimate / 3600, 2);
         
-        echo "<p><strong>Общее время в логах:</strong> {$totalTimeInLogs} сек ({$totalHoursInLogs} ч)</p>\n";
-        echo "<p><strong>Общая оценка времени:</strong> {$totalTimeEstimate} сек ({$totalHoursEstimate} ч)</p>\n";
+        echo "Общее время в логах: {$totalTimeInLogs} сек ({$totalHoursInLogs} ч)\n";
+        echo "Общая оценка времени: {$totalTimeEstimate} сек ({$totalHoursEstimate} ч)\n\n";
         
         // Логируем общую статистику по задачам
         $logger->log([
@@ -171,22 +178,24 @@ try {
             'total_time_estimate_hours' => $totalHoursEstimate
         ]);
     } else {
-        echo "<p>❌ Задач не найдено</p>\n";
+        echo "❌ Задач не найдено\n\n";
         $logger->log([
             'action' => 'no_tasks_found',
             'project_id' => $projectId
         ]);
     }
     
-    echo "<p>⏳ Анализ времени по задачам (это может занять некоторое время)...</p>\n";
+    echo "⏳ Анализ времени по задачам (это может занять некоторое время)...\n";
     $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
     
-    echo "<h5>💰 Итоговая статистика:</h5>\n";
-    echo "<p><strong>Общее время:</strong> {$projectTimeData['total_hours']} часов</p>\n";
-    echo "<p><strong>Общая стоимость:</strong> {$projectTimeData['total_cost']} руб.</p>\n";
+    echo "\n💰 ИТОГОВАЯ СТАТИСТИКА:\n";
+    echo "======================\n";
+    echo "Общее время: {$projectTimeData['total_hours']} часов\n";
+    echo "Общая стоимость: {$projectTimeData['total_cost']} руб.\n\n";
     
     // Проверяем условия и логируем соответствие
-    echo "<h5>🔍 Проверка условий:</h5>\n";
+    echo "🔍 ПРОВЕРКА УСЛОВИЙ:\n";
+    echo "===================\n";
     
     $conditionsCheck = [
         'min_hour_rounding' => MIN_HOUR_ROUNDING,
@@ -196,13 +205,11 @@ try {
         'has_time_data' => !empty($projectTimeData['roles_time'])
     ];
     
-    echo "<ul>\n";
-    echo "<li><strong>Минимальное округление:</strong> " . MIN_HOUR_ROUNDING . " час</li>\n";
-    echo "<li><strong>Порог округления:</strong> " . ROUNDING_THRESHOLD . " часа (10 минут)</li>\n";
-    echo "<li><strong>Общее время:</strong> {$projectTimeData['total_hours']} часов</li>\n";
-    echo "<li><strong>Соответствует минимальному времени:</strong> " . ($conditionsCheck['meets_minimum_time'] ? '✅ Да' : '❌ Нет') . "</li>\n";
-    echo "<li><strong>Есть данные по ролям:</strong> " . ($conditionsCheck['has_time_data'] ? '✅ Да' : '❌ Нет') . "</li>\n";
-    echo "</ul>\n";
+    echo "• Минимальное округление: " . MIN_HOUR_ROUNDING . " час\n";
+    echo "• Порог округления: " . ROUNDING_THRESHOLD . " часа (10 минут)\n";
+    echo "• Общее время: {$projectTimeData['total_hours']} часов\n";
+    echo "• Соответствует минимальному времени: " . ($conditionsCheck['meets_minimum_time'] ? '✅ Да' : '❌ Нет') . "\n";
+    echo "• Есть данные по ролям: " . ($conditionsCheck['has_time_data'] ? '✅ Да' : '❌ Нет') . "\n\n";
     
     // Логируем проверку условий
     $logger->log([
@@ -212,9 +219,10 @@ try {
     ]);
     
     if (!empty($projectTimeData['roles_time'])) {
-        echo "<h5>👥 Детальная разбивка по ролям:</h5>\n";
-        echo "<table border='1' style='border-collapse: collapse; width: 100%;'>\n";
-        echo "<tr><th>Роль</th><th>Часы</th><th>Минуты</th><th>Десятичные часы</th><th>Ставка (руб/ч)</th><th>Стоимость (руб)</th><th>Округление применено</th></tr>\n";
+        echo "👥 ДЕТАЛЬНАЯ РАЗБИВКА ПО РОЛЯМ:\n";
+        echo "===============================\n";
+        echo sprintf("%-20s %-8s %-8s %-15s %-12s %-12s %-20s\n", "Роль", "Часы", "Минуты", "Десятичные часы", "Ставка", "Стоимость", "Округление");
+        echo str_repeat("-", 95) . "\n";
         
         $totalCalculatedCost = 0;
         
@@ -233,15 +241,15 @@ try {
             
             $roundingStatus = $wasRounded ? '✅ Да' : '❌ Нет';
             
-            echo "<tr>";
-            echo "<td><strong>$role</strong></td>";
-            echo "<td>{$timeData['hours']}</td>";
-            echo "<td>{$timeData['minutes']}</td>";
-            echo "<td>{$timeData['decimal_hours']}</td>";
-            echo "<td>{$rate}</td>";
-            echo "<td><strong>" . number_format($cost, 2) . "</strong></td>";
-            echo "<td>{$roundingStatus}</td>";
-            echo "</tr>\n";
+            echo sprintf("%-20s %-8s %-8s %-15s %-12s %-12s %-20s\n",
+                $role,
+                $timeData['hours'],
+                $timeData['minutes'],
+                $timeData['decimal_hours'],
+                $rate . ' руб/ч',
+                number_format($cost, 2) . ' руб',
+                $roundingStatus
+            );
             
             // Логируем детали каждой роли
             $logger->log([
@@ -257,19 +265,20 @@ try {
             ]);
         }
         
-        echo "</table>\n";
+        echo "\n";
         
-        echo "<p><strong>Общая рассчитанная стоимость:</strong> " . number_format($totalCalculatedCost, 2) . " руб.</p>\n";
-        echo "<p><strong>Стоимость из системы:</strong> " . number_format($projectTimeData['total_cost'], 2) . " руб.</p>\n";
+        echo "Общая рассчитанная стоимость: " . number_format($totalCalculatedCost, 2) . " руб.\n";
+        echo "Стоимость из системы: " . number_format($projectTimeData['total_cost'], 2) . " руб.\n";
         
         // Проверяем соответствие расчетов
         $costDifference = abs($totalCalculatedCost - $projectTimeData['total_cost']);
         $costsMatch = $costDifference < 0.01; // Допускаем разницу в 1 копейку
         
-        echo "<p><strong>Расчеты соответствуют:</strong> " . ($costsMatch ? '✅ Да' : '❌ Нет') . "</p>\n";
+        echo "Расчеты соответствуют: " . ($costsMatch ? '✅ Да' : '❌ Нет') . "\n";
         if (!$costsMatch) {
-            echo "<p><strong>Разница:</strong> " . number_format($costDifference, 2) . " руб.</p>\n";
+            echo "Разница: " . number_format($costDifference, 2) . " руб.\n";
         }
+        echo "\n";
         
         // Логируем итоговую статистику по ролям
         $logger->log([
@@ -282,7 +291,7 @@ try {
         ]);
         
     } else {
-        echo "<p>❌ Нет данных о времени по ролям.</p>\n";
+        echo "❌ Нет данных о времени по ролям.\n\n";
         $logger->log([
             'action' => 'no_roles_data',
             'project_id' => $projectId
@@ -291,17 +300,18 @@ try {
     
     // Тестируем создание сделки (только если есть время)
     if ($projectTimeData['total_hours'] > 0) {
-        echo "<h4>Создание тестовой сделки...</h4>\n";
-        echo "<p><strong>ВНИМАНИЕ:</strong> Это создаст реальную сделку в Bitrix24!</p>\n";
+        echo "СОЗДАНИЕ ТЕСТОВОЙ СДЕЛКИ\n";
+        echo "=======================\n";
+        echo "⚠️  ВНИМАНИЕ: Это создаст реальную сделку в Bitrix24!\n\n";
         
         // Раскомментируйте следующую строку для реального создания сделки
         // $result = $dealCreator->createMonthlyWorkDeal($testDeal, $projectTimeData);
         // $logger->log($result);
         
-        echo "<p>Для реального создания сделки раскомментируйте соответствующие строки в коде.</p>\n";
-        echo "<p>Результат будет записан в лог файл.</p>\n";
+        echo "Для реального создания сделки раскомментируйте соответствующие строки в коде.\n";
+        echo "Результат будет записан в лог файл.\n\n";
     } else {
-        echo "<p>Нет затраченного времени - сделка не будет создана.</p>\n";
+        echo "Нет затраченного времени - сделка не будет создана.\n\n";
     }
     
     // Финальное логирование результатов теста
@@ -318,11 +328,12 @@ try {
         'test_timestamp' => date('Y-m-d H:i:s')
     ]);
     
-    echo "<h4>✅ Тест завершен.</h4>\n";
-    echo "<p><strong>Все данные записаны в лог файл:</strong> deal_creation_test.log</p>\n";
+    echo "✅ ТЕСТ ЗАВЕРШЕН\n";
+    echo "===============\n";
+    echo "Все данные записаны в лог файл: deal_creation_test.log\n";
     
 } catch (Exception $e) {
-    echo "<p style='color: red;'>Ошибка: " . $e->getMessage() . "</p>\n";
+    echo "❌ ОШИБКА: " . $e->getMessage() . "\n";
     if (isset($logger)) {
         $logger->log(['error' => $e->getMessage()]);
     }
