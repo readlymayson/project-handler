@@ -210,7 +210,7 @@ class DealCreator
             'contact_id' => null, // У компаний нет контактов напрямую
             'company_id' => $company['ID'] ?? null,
             'title' => $company['TITLE'] ?? '',
-            'default_price' => $company['UF_CRM_DEFAULT_RATE'] ?? null
+            'default_price' => $company['UF_CRM_DEFAULT_RATE'] ?? DEFAULT_HOURLY_RATE
         ];
     }
 
@@ -396,7 +396,7 @@ class DealCreator
             ->format('Y-m-d\TH:i:sP');
 
         $lastMonthEnd = (new DateTime('last day of last month'))
-            ->setTime(23, 59, 59)
+            ->setTime(23, 59, 0)
             ->format('Y-m-d\TH:i:sP');
 
         $this->logger->log([
@@ -426,11 +426,40 @@ class DealCreator
                 'start' => $start
             ];
 
+            // Добавляем задержку между батчами (кроме первого)
+            if ($start > 0) {
+                batchDelay();
+            }
+
+            $this->logger->log([
+                'action' => 'api_call_start',
+                'method' => $method,
+                'start' => $start
+            ]);
+
             $responseUnfinished = $this->call->callBitrix24API($method, $paramsUnfinished);
             $tasksUnfinished = $responseUnfinished['result']['tasks'] ?? [];
 
             $responseFinished = $this->call->callBitrix24API($method, $paramsFinished);
             $tasksFinished = $responseFinished['result']['tasks'] ?? [];
+
+            $this->logger->log([
+                'action' => 'api_call_response',
+                'response_unfinished' => $responseUnfinished,
+                'response_finished' => $responseFinished,
+                'has_error_unfinished' => isset($responseUnfinished['error']),
+                'has_error_finished' => isset($responseFinished['error']),
+                'error_code_unfinished' => $responseUnfinished['error'] ?? null,
+                'error_code_finished' => $responseFinished['error'] ?? null
+            ]);
+
+            if (isset($responseUnfinished['error'])) {
+                throw new Exception("API Error (unfinished): {$responseUnfinished['error']} - {$responseUnfinished['error_description']}");
+            }
+
+            if (isset($responseFinished['error'])) {
+                throw new Exception("API Error (finished): {$responseFinished['error']} - {$responseFinished['error_description']}");
+            }
 
             $tasks = array_merge($tasksUnfinished, $tasksFinished);
             $allTasks = array_merge($allTasks, $tasks);
