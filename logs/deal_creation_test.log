@@ -1,0 +1,983 @@
+
+[17.09 13:12:23] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:12:24] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:59+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:12:24] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "params": {
+        "filter": {
+            "GROUP_ID": 168,
+            "0": {
+                "LOGIC": "OR",
+                "0": {
+                    "CLOSED_DATE": null
+                },
+                "1": {
+                    ">CLOSED_DATE": "2025-08-01T00:00:00+00:00"
+                }
+            }
+        },
+        "select": [
+            "ID",
+            "TITLE",
+            "TIME_ESTIMATE",
+            "TIME_SPENT_IN_LOGS",
+            "CLOSED_DATE"
+        ],
+        "start": 0
+    },
+    "start": 0
+}
+[17.09 13:12:24] 
+{
+    "error": "get_project_tasks_failed",
+    "message": "HTTP error: 400 - {\"error\":1032,\"error_description\":\"Incorrect date\\\/time: 2025-08-01T00:00:00+00:00\"}",
+    "file": "\/var\/www\/efrolov-dev\/html\/application\/akvilon\/require\/usualClass.php",
+    "line": 35,
+    "trace": "#0 \/var\/www\/efrolov-dev\/html\/application\/akvilon\/project-handler\/DealCreator.php(437): Usual->callBitrix24API()\n#1 \/var\/www\/efrolov-dev\/html\/application\/akvilon\/project-handler\/test_deal_creation.php(115): DealCreator->getProjectTasks()\n#2 {main}"
+}
+[17.09 13:18:47] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:18:53] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:59",
+    "last_month_first_day": "2025-08-01T00:00:00"
+}
+[17.09 13:18:53] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:18:53] 
+{
+    "error": "get_project_tasks_failed",
+    "message": "HTTP error: 400 - {\"error\":1032,\"error_description\":\"Incorrect date\\\/time: 2025-08-01T00:00:00\"}",
+    "file": "\/var\/www\/efrolov-dev\/html\/application\/akvilon\/require\/usualClass.php",
+    "line": 35,
+    "trace": "#0 \/var\/www\/efrolov-dev\/html\/application\/akvilon\/project-handler\/DealCreator.php(436): Usual->callBitrix24API()\n#1 \/var\/www\/efrolov-dev\/html\/application\/akvilon\/project-handler\/test_deal_creation.php(115): DealCreator->getProjectTasks()\n#2 {main}"
+}
+[17.09 13:24:55] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:24:55] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:24:55] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:25:00] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758115500.281062,
+            "finish": 1758115500.329321,
+            "duration": 0.04825901985168457,
+            "processing": 0.02162909507751465,
+            "date_start": "2025-09-17T16:25:00+03:00",
+            "date_finish": "2025-09-17T16:25:00+03:00",
+            "operating_reset_at": 1758116100,
+            "operating": 0
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758115500.402902,
+            "finish": 1758115500.433984,
+            "duration": 0.0310821533203125,
+            "processing": 0.004709005355834961,
+            "date_start": "2025-09-17T16:25:00+03:00",
+            "date_finish": "2025-09-17T16:25:00+03:00",
+            "operating_reset_at": 1758116100,
+            "operating": 0
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:25:00] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:25:00] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:25:00] 
+{
+    "action": "project_tasks_analysis",
+    "project_id": 168,
+    "company_id": "210",
+    "tasks_count": 1,
+    "default_price": "2500|RUB"
+}
+[17.09 13:25:00] 
+{
+    "action": "task_details",
+    "task_id": null,
+    "task_title": null,
+    "time_spent_seconds": 0,
+    "time_estimate_seconds": 0,
+    "closed_date": "\u043d\u0435 \u0437\u0430\u043a\u0440\u044b\u0442\u0430"
+}
+[17.09 13:25:00] 
+{
+    "action": "tasks_summary",
+    "total_time_spent_seconds": 0,
+    "total_time_spent_hours": 0,
+    "total_time_estimate_seconds": 0,
+    "total_time_estimate_hours": 0
+}
+[17.09 13:25:00] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:25:00] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:25:00] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758115500.509339,
+            "finish": 1758115500.579451,
+            "duration": 0.07011198997497559,
+            "processing": 0.04461193084716797,
+            "date_start": "2025-09-17T16:25:00+03:00",
+            "date_finish": "2025-09-17T16:25:00+03:00",
+            "operating_reset_at": 1758116100,
+            "operating": 0
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758115500.651735,
+            "finish": 1758115500.689304,
+            "duration": 0.03756904602050781,
+            "processing": 0.007461071014404297,
+            "date_start": "2025-09-17T16:25:00+03:00",
+            "date_finish": "2025-09-17T16:25:00+03:00",
+            "operating_reset_at": 1758116100,
+            "operating": 0
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:25:00] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:25:00] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:25:17] 
+{
+    "action": "conditions_check",
+    "conditions": {
+        "min_hour_rounding": 1,
+        "rounding_threshold": 0.1,
+        "total_hours": 30,
+        "meets_minimum_time": true,
+        "has_time_data": true
+    },
+    "project_id": 168
+}
+[17.09 13:25:17] 
+{
+    "action": "role_time_details",
+    "role": "\u0415\u0433\u043e\u0440 \u0424\u0440\u043e\u043b\u043e\u0432",
+    "hours": 30,
+    "minutes": 0,
+    "decimal_hours": 30,
+    "rate": 1000,
+    "cost": 30000,
+    "was_rounded": false,
+    "original_hours": 30
+}
+[17.09 13:25:17] 
+{
+    "action": "roles_summary",
+    "total_calculated_cost": 30000,
+    "system_total_cost": 30000,
+    "cost_difference": 0,
+    "costs_match": true,
+    "roles_count": 1
+}
+[17.09 13:25:17] 
+{
+    "action": "test_completed",
+    "project_id": 168,
+    "company_id": "210",
+    "company_title": "\u0422\u0435\u0441\u0442 \u043a\u043e\u043c\u043f",
+    "total_tasks": 1,
+    "total_hours": 30,
+    "total_cost": 30000,
+    "default_price": "2500|RUB",
+    "conditions_met": true,
+    "test_timestamp": "2025-09-17 13:25:17"
+}
+[17.09 13:33:00] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:33:01] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:33:01] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:33:06] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758115986.116507,
+            "finish": 1758115986.30989,
+            "duration": 0.19338297843933105,
+            "processing": 0.16163086891174316,
+            "date_start": "2025-09-17T16:33:06+03:00",
+            "date_finish": "2025-09-17T16:33:06+03:00",
+            "operating_reset_at": 1758116586,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758115986.383203,
+            "finish": 1758115986.417095,
+            "duration": 0.033891916275024414,
+            "processing": 0.0052280426025390625,
+            "date_start": "2025-09-17T16:33:06+03:00",
+            "date_finish": "2025-09-17T16:33:06+03:00",
+            "operating_reset_at": 1758116586,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:33:06] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:33:06] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:33:06] 
+{
+    "action": "project_tasks_analysis",
+    "project_id": 168,
+    "company_id": "210",
+    "tasks_count": 1,
+    "default_price": "2500|RUB"
+}
+[17.09 13:33:06] 
+{
+    "action": "task_details",
+    "task_id": "7542",
+    "task_title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+    "time_spent_seconds": 0,
+    "time_estimate_seconds": 0,
+    "closed_date": "\u043d\u0435 \u0437\u0430\u043a\u0440\u044b\u0442\u0430"
+}
+[17.09 13:33:06] 
+{
+    "action": "tasks_summary",
+    "total_time_spent_seconds": 0,
+    "total_time_spent_hours": 0,
+    "total_time_estimate_seconds": 0,
+    "total_time_estimate_hours": 0
+}
+[17.09 13:33:06] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:33:06] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:33:11] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758115986.520025,
+            "finish": 1758115986.570339,
+            "duration": 0.05031394958496094,
+            "processing": 0.021816015243530273,
+            "date_start": "2025-09-17T16:33:06+03:00",
+            "date_finish": "2025-09-17T16:33:06+03:00",
+            "operating_reset_at": 1758116586,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758115991.655205,
+            "finish": 1758115991.704432,
+            "duration": 0.049226999282836914,
+            "processing": 0.010338068008422852,
+            "date_start": "2025-09-17T16:33:11+03:00",
+            "date_finish": "2025-09-17T16:33:11+03:00",
+            "operating_reset_at": 1758116591,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:33:11] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:33:11] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:33:13] 
+{
+    "action": "conditions_check",
+    "conditions": {
+        "min_hour_rounding": 1,
+        "rounding_threshold": 0.1,
+        "total_hours": 30,
+        "meets_minimum_time": true,
+        "has_time_data": true
+    },
+    "project_id": 168
+}
+[17.09 13:33:13] 
+{
+    "action": "role_time_details",
+    "role": "\u0415\u0433\u043e\u0440 \u0424\u0440\u043e\u043b\u043e\u0432",
+    "hours": 30,
+    "minutes": 0,
+    "decimal_hours": 30,
+    "rate": 1000,
+    "cost": 30000,
+    "was_rounded": false,
+    "original_hours": 30
+}
+[17.09 13:33:13] 
+{
+    "action": "roles_summary",
+    "total_calculated_cost": 30000,
+    "system_total_cost": 30000,
+    "cost_difference": 0,
+    "costs_match": true,
+    "roles_count": 1
+}
+[17.09 13:33:13] 
+{
+    "type": "deal_creation",
+    "status": "error",
+    "original_company_id": 0,
+    "message": "\u0423 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0438  \u043d\u0435 \u0443\u043a\u0430\u0437\u0430\u043d\u0430 \u0441\u0441\u044b\u043b\u043a\u0430 \u043d\u0430 \u043f\u0440\u043e\u0435\u043a\u0442 \u0438\u043b\u0438 \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u0437\u0432\u043b\u0435\u0447\u044c ID \u043f\u0440\u043e\u0435\u043a\u0442\u0430"
+}
+[17.09 13:33:13] 
+{
+    "status": "error",
+    "message": "\u0423 \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u0438  \u043d\u0435 \u0443\u043a\u0430\u0437\u0430\u043d\u0430 \u0441\u0441\u044b\u043b\u043a\u0430 \u043d\u0430 \u043f\u0440\u043e\u0435\u043a\u0442 \u0438\u043b\u0438 \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u0437\u0432\u043b\u0435\u0447\u044c ID \u043f\u0440\u043e\u0435\u043a\u0442\u0430"
+}
+[17.09 13:33:13] 
+{
+    "action": "test_completed",
+    "project_id": 168,
+    "company_id": "210",
+    "company_title": "\u0422\u0435\u0441\u0442 \u043a\u043e\u043c\u043f",
+    "total_tasks": 1,
+    "total_hours": 30,
+    "total_cost": 30000,
+    "default_price": "2500|RUB",
+    "conditions_met": true,
+    "test_timestamp": "2025-09-17 13:33:13"
+}
+[17.09 13:35:56] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:35:57] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:35:57] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:35:57] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758116157.196088,
+            "finish": 1758116157.254256,
+            "duration": 0.05816793441772461,
+            "processing": 0.02909994125366211,
+            "date_start": "2025-09-17T16:35:57+03:00",
+            "date_finish": "2025-09-17T16:35:57+03:00",
+            "operating_reset_at": 1758116757,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758116157.326753,
+            "finish": 1758116157.360834,
+            "duration": 0.03408098220825195,
+            "processing": 0.0064580440521240234,
+            "date_start": "2025-09-17T16:35:57+03:00",
+            "date_finish": "2025-09-17T16:35:57+03:00",
+            "operating_reset_at": 1758116757,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:35:57] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:35:57] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:35:57] 
+{
+    "action": "project_tasks_analysis",
+    "project_id": 168,
+    "company_id": "210",
+    "tasks_count": 1,
+    "default_price": "2500|RUB"
+}
+[17.09 13:35:57] 
+{
+    "action": "task_details",
+    "task_id": "7542",
+    "task_title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+    "time_spent_seconds": "108600",
+    "time_estimate_seconds": "0",
+    "closed_date": "\u043d\u0435 \u0437\u0430\u043a\u0440\u044b\u0442\u0430"
+}
+[17.09 13:35:57] 
+{
+    "action": "tasks_summary",
+    "total_time_spent_seconds": 108600,
+    "total_time_spent_hours": 30.17,
+    "total_time_estimate_seconds": 0,
+    "total_time_estimate_hours": 0
+}
+[17.09 13:35:57] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:35:57] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:36:02] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758116162.43864,
+            "finish": 1758116162.491354,
+            "duration": 0.052713871002197266,
+            "processing": 0.02215099334716797,
+            "date_start": "2025-09-17T16:36:02+03:00",
+            "date_finish": "2025-09-17T16:36:02+03:00",
+            "operating_reset_at": 1758116762,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758116162.577942,
+            "finish": 1758116162.616715,
+            "duration": 0.0387730598449707,
+            "processing": 0.007330894470214844,
+            "date_start": "2025-09-17T16:36:02+03:00",
+            "date_finish": "2025-09-17T16:36:02+03:00",
+            "operating_reset_at": 1758116762,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:36:02] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:36:02] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:36:04] 
+{
+    "action": "conditions_check",
+    "conditions": {
+        "min_hour_rounding": 1,
+        "rounding_threshold": 0.1,
+        "total_hours": 30,
+        "meets_minimum_time": true,
+        "has_time_data": true
+    },
+    "project_id": 168
+}
+[17.09 13:36:04] 
+{
+    "action": "role_time_details",
+    "role": "\u0415\u0433\u043e\u0440 \u0424\u0440\u043e\u043b\u043e\u0432",
+    "hours": 30,
+    "minutes": 0,
+    "decimal_hours": 30,
+    "rate": 2500,
+    "cost": 75000,
+    "was_rounded": false,
+    "original_hours": 30
+}
+[17.09 13:36:04] 
+{
+    "action": "roles_summary",
+    "total_calculated_cost": 75000,
+    "system_total_cost": 75000,
+    "cost_difference": 0,
+    "costs_match": true,
+    "roles_count": 1
+}
+[17.09 13:36:04] 
+{
+    "action": "test_completed",
+    "project_id": 168,
+    "company_id": "210",
+    "company_title": "\u0422\u0435\u0441\u0442 \u043a\u043e\u043c\u043f",
+    "total_tasks": 1,
+    "total_hours": 30,
+    "total_cost": 75000,
+    "default_price": "2500|RUB",
+    "conditions_met": true,
+    "test_timestamp": "2025-09-17 13:36:04"
+}
+[17.09 13:40:06] Не удалось извлечь ID проекта из: no numbers here
+[17.09 13:40:07] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:40:07] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:40:16] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758116407.106345,
+            "finish": 1758116407.178572,
+            "duration": 0.07222700119018555,
+            "processing": 0.04093813896179199,
+            "date_start": "2025-09-17T16:40:07+03:00",
+            "date_finish": "2025-09-17T16:40:07+03:00",
+            "operating_reset_at": 1758117007,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758116416.009239,
+            "finish": 1758116416.060317,
+            "duration": 0.051078081130981445,
+            "processing": 0.008282184600830078,
+            "date_start": "2025-09-17T16:40:16+03:00",
+            "date_finish": "2025-09-17T16:40:16+03:00",
+            "operating_reset_at": 1758117016,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:40:16] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:40:16] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:40:16] 
+{
+    "action": "project_tasks_analysis",
+    "project_id": 168,
+    "company_id": "210",
+    "tasks_count": 1,
+    "default_price": "2500|RUB"
+}
+[17.09 13:40:16] 
+{
+    "action": "task_details",
+    "task_id": "7542",
+    "task_title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+    "time_spent_seconds": "108600",
+    "time_estimate_seconds": "0",
+    "closed_date": "\u043d\u0435 \u0437\u0430\u043a\u0440\u044b\u0442\u0430"
+}
+[17.09 13:40:16] 
+{
+    "action": "tasks_summary",
+    "total_time_spent_seconds": 108600,
+    "total_time_spent_hours": 30.17,
+    "total_time_estimate_seconds": 0,
+    "total_time_estimate_hours": 0
+}
+[17.09 13:40:16] 
+{
+    "action": "get_project_tasks_start",
+    "project_id": 168,
+    "last_month_end": "2025-08-31T23:59:00+00:00",
+    "last_month_first_day": "2025-08-01T00:00:00+00:00"
+}
+[17.09 13:40:16] 
+{
+    "action": "api_call_start",
+    "method": "tasks.task.list",
+    "start": 0
+}
+[17.09 13:40:28] 
+{
+    "action": "api_call_response",
+    "response_unfinished": {
+        "result": {
+            "tasks": [
+                {
+                    "id": "7542",
+                    "title": "\u0442\u0435\u0441\u0442\u043e\u0432\u0430\u044f \u0437\u0430\u0434\u0430\u0447\u0430",
+                    "timeEstimate": "0",
+                    "timeSpentInLogs": "108600",
+                    "closedDate": null,
+                    "group": []
+                }
+            ]
+        },
+        "total": 1,
+        "time": {
+            "start": 1758116423.646132,
+            "finish": 1758116423.722204,
+            "duration": 0.07607197761535645,
+            "processing": 0.038327932357788086,
+            "date_start": "2025-09-17T16:40:23+03:00",
+            "date_finish": "2025-09-17T16:40:23+03:00",
+            "operating_reset_at": 1758117023,
+            "operating": 0.16160988807678223
+        }
+    },
+    "response_finished": {
+        "result": {
+            "tasks": []
+        },
+        "total": 0,
+        "time": {
+            "start": 1758116428.794162,
+            "finish": 1758116428.828823,
+            "duration": 0.034661054611206055,
+            "processing": 0.006139993667602539,
+            "date_start": "2025-09-17T16:40:28+03:00",
+            "date_finish": "2025-09-17T16:40:28+03:00",
+            "operating_reset_at": 1758117028,
+            "operating": 0.16160988807678223
+        }
+    },
+    "has_error_unfinished": false,
+    "has_error_finished": false,
+    "error_code_unfinished": null,
+    "error_code_finished": null
+}
+[17.09 13:40:28] 
+{
+    "action": "get_project_tasks_batch",
+    "batch_number": 1,
+    "tasks_in_batch": 1,
+    "unfinished_count": 1,
+    "finished_count": 0,
+    "total_tasks_so_far": 1
+}
+[17.09 13:40:28] 
+{
+    "action": "get_project_tasks_complete",
+    "project_id": 168,
+    "total_tasks": 1
+}
+[17.09 13:40:30] 
+{
+    "action": "conditions_check",
+    "conditions": {
+        "min_hour_rounding": 1,
+        "rounding_threshold": 0.1,
+        "total_hours": 30,
+        "meets_minimum_time": true,
+        "has_time_data": true
+    },
+    "project_id": 168
+}
+[17.09 13:40:30] 
+{
+    "action": "role_time_details",
+    "role": "\u0415\u0433\u043e\u0440 \u0424\u0440\u043e\u043b\u043e\u0432",
+    "hours": 30,
+    "minutes": 0,
+    "decimal_hours": 30,
+    "rate": 2500,
+    "cost": 75000,
+    "was_rounded": false,
+    "original_hours": 30
+}
+[17.09 13:40:30] 
+{
+    "action": "roles_summary",
+    "total_calculated_cost": 75000,
+    "system_total_cost": 75000,
+    "cost_difference": 0,
+    "costs_match": true,
+    "roles_count": 1
+}
+[17.09 13:40:30] 
+{
+    "action": "test_completed",
+    "project_id": 168,
+    "company_id": "210",
+    "company_title": "\u0422\u0435\u0441\u0442 \u043a\u043e\u043c\u043f",
+    "total_tasks": 1,
+    "total_hours": 30,
+    "total_cost": 75000,
+    "default_price": "2500|RUB",
+    "conditions_met": true,
+    "test_timestamp": "2025-09-17 13:40:30"
+}

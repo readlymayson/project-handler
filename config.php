@@ -55,10 +55,16 @@ define('API_RETRY_DELAY', 2.0); // Задержка перед повтором 
  */
 function getRoleRate($role, $defaultPrice = null): float
 {
-    if ($defaultPrice !== null && is_numeric($defaultPrice) && $defaultPrice > 0) {
-        return (float)$defaultPrice;
+    // Если переданная цена валидна, используем её
+    if ($defaultPrice !== null) {
+        // Убираем |RUB из цены если есть
+        $cleanPrice = is_string($defaultPrice) ? str_replace('|RUB', '', $defaultPrice) : $defaultPrice;
+        if (is_numeric($cleanPrice) && $cleanPrice > 0) {
+            return (float)$cleanPrice;
+        }
     }
     
+    // Иначе используем дефолтную цену из конфига
     return DEFAULT_HOURLY_RATE;
 }
 

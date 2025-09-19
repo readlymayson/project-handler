@@ -102,13 +102,38 @@ try {
     // Получаем данные о времени по проекту
     echo "ПОЛУЧЕНИЕ ДАННЫХ О ВРЕМЕНИ ПО ПРОЕКТУ\n";
     echo "====================================\n";
-    $defaultPrice = $testCompany['UF_CRM_DEFAULT_RATE'] ?? null;
-    echo "Дефолтная цена из компании: " . ($defaultPrice ?? 'не задана') . " руб/ч\n\n";
+    $defaultPrice = $testCompany['UF_CRM_DEFAULT_RATE'] ?? DEFAULT_HOURLY_RATE;
+    // Убираем |RUB из цены если есть
+    $cleanPrice = is_string($defaultPrice) ? str_replace('|RUB', '', $defaultPrice) : $defaultPrice;
+    echo "Дефолтная цена из компании: " . $cleanPrice . " руб/ч\n\n";
     
     // Получаем детальную информацию о задачах
     echo "⏳ Получение задач проекта (это может занять некоторое время)...\n";
-    $tasks = $dealCreator->getProjectTasks($projectId);
-    $tasksCount = count($tasks);
+    echo "   Проект ID: $projectId\n";
+    echo "   Начало: " . date('Y-m-d H:i:s') . "\n";
+    
+    try {
+        $startTime = microtime(true);
+        $tasks = $dealCreator->getProjectTasks($projectId);
+        $endTime = microtime(true);
+        $executionTime = round($endTime - $startTime, 2);
+        
+        $tasksCount = count($tasks);
+        echo "✅ Задачи успешно получены за {$executionTime} сек\n";
+        echo "   Количество задач: $tasksCount\n\n";
+    } catch (Exception $e) {
+        echo "❌ Ошибка при получении задач: " . $e->getMessage() . "\n";
+        echo "   Файл: " . $e->getFile() . "\n";
+        echo "   Строка: " . $e->getLine() . "\n";
+        $logger->log([
+            'error' => 'get_project_tasks_failed', 
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        exit;
+    }
     
     echo "\n📊 СТАТИСТИКА ЗАДАЧ:\n";
     echo "-------------------\n";
@@ -133,16 +158,19 @@ try {
         $totalTimeEstimate = 0;
         
         foreach ($tasks as $task) {
-            $timeSpent = $task['TIME_SPENT_IN_LOGS'] ?? 0;
-            $timeEstimate = $task['TIME_ESTIMATE'] ?? 0;
-            $closedDate = $task['CLOSED_DATE'] ?? 'не закрыта';
+            // API возвращает данные в camelCase, приводим к нужному формату
+            $timeSpent = $task['timeSpentInLogs'] ?? $task['TIME_SPENT_IN_LOGS'] ?? 0;
+            $timeEstimate = $task['timeEstimate'] ?? $task['TIME_ESTIMATE'] ?? 0;
+            $closedDate = $task['closedDate'] ?? $task['CLOSED_DATE'] ?? 'не закрыта';
+            $taskId = $task['id'] ?? $task['ID'] ?? 0;
+            $taskTitle = $task['title'] ?? $task['TITLE'] ?? 'Без названия';
             
             $totalTimeInLogs += $timeSpent;
             $totalTimeEstimate += $timeEstimate;
             
-            $title = mb_substr($task['TITLE'], 0, 47) . (mb_strlen($task['TITLE']) > 47 ? '...' : '');
+            $title = mb_substr($taskTitle, 0, 47) . (mb_strlen($taskTitle) > 47 ? '...' : '');
             echo sprintf("%-8s %-50s %-15s %-15s %-20s\n", 
-                $task['ID'], 
+                $taskId, 
                 $title, 
                 $timeSpent . ' сек', 
                 $timeEstimate . ' сек', 
@@ -152,8 +180,8 @@ try {
             // Логируем детали каждой задачи
             $logger->log([
                 'action' => 'task_details',
-                'task_id' => $task['ID'],
-                'task_title' => $task['TITLE'],
+                'task_id' => $taskId,
+                'task_title' => $taskTitle,
                 'time_spent_seconds' => $timeSpent,
                 'time_estimate_seconds' => $timeEstimate,
                 'closed_date' => $closedDate
@@ -186,7 +214,28 @@ try {
     }
     
     echo "⏳ Анализ времени по задачам (это может занять некоторое время)...\n";
-    $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
+    echo "   Начало: " . date('Y-m-d H:i:s') . "\n";
+    
+    try {
+        $startTime = microtime(true);
+        $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
+        $endTime = microtime(true);
+        $executionTime = round($endTime - $startTime, 2);
+        
+        echo "✅ Анализ времени завершен за {$executionTime} сек\n\n";
+    } catch (Exception $e) {
+        echo "❌ Ошибка при анализе времени: " . $e->getMessage() . "\n";
+        echo "   Файл: " . $e->getFile() . "\n";
+        echo "   Строка: " . $e->getLine() . "\n";
+        $logger->log([
+            'error' => 'get_project_time_data_failed', 
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        exit;
+    }
     
     echo "\n💰 ИТОГОВАЯ СТАТИСТИКА:\n";
     echo "======================\n";
@@ -305,8 +354,8 @@ try {
         echo "⚠️  ВНИМАНИЕ: Это создаст реальную сделку в Bitrix24!\n\n";
         
         // Раскомментируйте следующую строку для реального создания сделки
-        // $result = $dealCreator->createMonthlyWorkDeal($testDeal, $projectTimeData);
-        // $logger->log($result);
+        $result = $dealCreator->createMonthlyWorkDeal($testCompany, $projectTimeData);
+        $logger->log($result);
         
         echo "Для реального создания сделки раскомментируйте соответствующие строки в коде.\n";
         echo "Результат будет записан в лог файл.\n\n";
