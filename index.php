@@ -57,10 +57,7 @@ try {
             $projectId = $dealCreator->extractProjectId($company['UF_CRM_PROJECT_LINK']);
             
             if ($projectId > 0) {
-                // Получаем default_price из компании
-                $defaultPrice = $company['UF_CRM_DEFAULT_RATE'] ?? DEFAULT_HOURLY_RATE;
-                
-                $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
+                $projectTimeData = $dealCreator->getProjectTimeData($projectId, $company);
                 
                 // Создаем сделку только если есть затраченное время
                 if ($projectTimeData['total_hours'] > 0) {

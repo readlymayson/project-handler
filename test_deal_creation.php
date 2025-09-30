@@ -168,7 +168,7 @@ try {
             $totalTimeInLogs += $timeSpent;
             $totalTimeEstimate += $timeEstimate;
             
-            $title = mb_substr($taskTitle, 0, 47) . (mb_strlen($taskTitle) > 47 ? '...' : '');
+            $title = substr($taskTitle, 0, 47) . (strlen($taskTitle) > 47 ? '...' : '');
             echo sprintf("%-8s %-50s %-15s %-15s %-20s\n", 
                 $taskId, 
                 $title, 
@@ -218,7 +218,7 @@ try {
     
     try {
         $startTime = microtime(true);
-        $projectTimeData = $dealCreator->getProjectTimeData($projectId, $defaultPrice);
+        $projectTimeData = $dealCreator->getProjectTimeData($projectId, $testCompany);
         $endTime = microtime(true);
         $executionTime = round($endTime - $startTime, 2);
         
@@ -276,7 +276,7 @@ try {
         $totalCalculatedCost = 0;
         
         foreach ($projectTimeData['roles_time'] as $role => $timeData) {
-            $rate = getRoleRate($role, $defaultPrice);
+            $rate = getRoleRate($role, $testCompany);
             $cost = $timeData['decimal_hours'] * $rate;
             $totalCalculatedCost += $cost;
             

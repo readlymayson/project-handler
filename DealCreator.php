@@ -120,11 +120,8 @@ class DealCreator
             // Получаем информацию о клиентах и компании
             $clientInfo = $this->getClientInfo($originalCompanyId);
             
-            // Получаем ответственного проект-менеджера
-            $projectManager = $this->getProjectManager();
-            
             // Формируем данные для новой сделки
-            $dealData = $this->prepareDealData($company, $projectInfo, $clientInfo, $projectTimeData, $projectManager);
+            $dealData = $this->prepareDealData($company, $projectInfo, $clientInfo, $projectTimeData);
             
             // Создаем сделку
             $result = $this->call->callBitrix24API('crm.deal.add', [
@@ -152,7 +149,8 @@ class DealCreator
                 'funnel_id' => MONTHLY_WORK_FUNNEL_ID,
                 'total_hours' => $projectTimeData['total_hours'],
                 'total_cost' => $projectTimeData['total_cost'],
-                'message' => 'Сделка "Работы за предыдущий месяц" успешно создана в воронке ' . MONTHLY_WORK_FUNNEL_ID
+                'assigned_by_id' => $company['ASSIGNED_BY_ID'] ?? 1,
+                'message' => 'Сделка "Работы за предыдущий месяц" успешно создана в воронке ' . MONTHLY_WORK_FUNNEL_ID . ', ответственный: ' . ($company['ASSIGNED_BY_ID'] ?? 1)
             ]);
 
 
@@ -256,7 +254,7 @@ class DealCreator
     /**
      * Подготавливает данные для создания сделки
      */
-    private function prepareDealData($company, $projectInfo, $clientInfo, $projectTimeData, $projectManager): array
+    private function prepareDealData($company, $projectInfo, $clientInfo, $projectTimeData): array
     {
         $currentDate = new DateTime();
         $firstDayOfMonth = new DateTime('first day of this month');
@@ -274,8 +272,15 @@ class DealCreator
             }
         }
 
-        // Формируем комментарий с разбивкой по ролям
-        $comment = $this->formatTimeComment($projectTimeData['roles_time']);
+        // Формируем комментарий с разбивкой по ролям и детальным отчетом по задачам
+        $projectId = $this->extractProjectId($company['UF_CRM_PROJECT_LINK']);
+        $comment = $this->formatTimeComment($projectTimeData['roles_time'], $projectId);
+
+        // Получаем ответственного из исходной компании, если не задан - используем администратора
+        $assignedById = $company['ASSIGNED_BY_ID'] ?? 1;
+        if (empty($assignedById) || $assignedById <= 0) {
+            $assignedById = 1; // Администратор по умолчанию
+        }
 
         return [
             'TITLE' => $projectInfo['NAME'], // Название проекта
@@ -286,7 +291,7 @@ class DealCreator
             'BEGINDATE' => $startDate->format('Y-m-d'), // Дата начала
             'CONTACT_ID' => $clientInfo['contact_id'], // Клиент
             'COMPANY_ID' => $clientInfo['company_id'], // Компания
-            'ASSIGNED_BY_ID' => $projectManager, // Ответственный
+            'ASSIGNED_BY_ID' => $assignedById, // Ответственный из исходной компании
             'COMMENTS' => $comment, // Комментарий с разбивкой времени
             'UF_CRM_PROJECT_LINK' => $company['UF_CRM_PROJECT_LINK'], // Ссылка на проект
             'UF_CRM_ORIGINAL_COMPANY' => $company['ID'] // Ссылка на исходную компанию
@@ -294,11 +299,21 @@ class DealCreator
     }
 
     /**
-     * Форматирует комментарий с разбивкой времени по ролям
+     * Форматирует комментарий с разбивкой времени по ролям и детальным отчетом по задачам
      */
-    private function formatTimeComment($rolesTime): string
+    private function formatTimeComment($rolesTime, $projectId = null): string
     {
         $comment = "Учет времени по проекту:\n\n";
+        
+        // Добавляем детальный отчет по задачам, если передан ID проекта
+        if ($projectId) {
+            $comment .= $this->generateDetailedTaskReport($projectId);
+            $comment .= "\n" . str_repeat("=", 50) . "\n\n";
+        }
+        
+        // Общая сводка по ролям
+        $comment .= "СВОДКА ПО РОЛЯМ:\n";
+        $comment .= str_repeat("-", 20) . "\n";
         
         foreach ($rolesTime as $role => $timeData) {
             $hours = $timeData['hours'];
@@ -312,9 +327,85 @@ class DealCreator
     }
 
     /**
+     * Генерирует детальный отчет по задачам с разбивкой по ролям и времени
+     */
+    private function generateDetailedTaskReport($projectId): string
+    {
+        try {
+            $tasks = $this->getProjectTasks($projectId);
+            if (empty($tasks)) {
+                return "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n" . 
+                       str_repeat("-", 30) . "\n" .
+                       "Задач не найдено\n\n";
+            }
+
+            $report = "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n";
+            $report .= str_repeat("-", 30) . "\n\n";
+
+            $totalTasks = count($tasks);
+            $totalTime = 0;
+
+            foreach ($tasks as $index => $task) {
+                $taskId = $task['id'] ?? $task['ID'] ?? 0;
+                $taskTitle = $task['title'] ?? $task['TITLE'] ?? 'Без названия';
+                $timeSpent = $task['timeSpentInLogs'] ?? $task['TIME_SPENT_IN_LOGS'] ?? 0;
+                $timeEstimate = $task['timeEstimate'] ?? $task['TIME_ESTIMATE'] ?? 0;
+                $closedDate = $task['closedDate'] ?? $task['CLOSED_DATE'] ?? null;
+
+                // Получаем детальную информацию о времени по ролям для этой задачи
+                $taskRolesTime = $this->getTaskTimeByRoles($taskId);
+                
+                // Конвертируем секунды в часы
+                $hoursSpent = round($timeSpent / 3600, 2);
+                $hoursEstimate = round($timeEstimate / 3600, 2);
+                $totalTime += $hoursSpent;
+
+                $report .= "ЗАДАЧА #" . ($index + 1) . " (ID: $taskId)\n";
+                $report .= "Название: " . substr($taskTitle, 0, 60) . 
+                          (strlen($taskTitle) > 60 ? '...' : '') . "\n";
+                $report .= "Время затрачено: {$hoursSpent} ч\n";
+                $report .= "Время оценено: {$hoursEstimate} ч\n";
+                
+                if ($closedDate) {
+                    $report .= "Дата закрытия: $closedDate\n";
+                } else {
+                    $report .= "Статус: В работе\n";
+                }
+
+                // Добавляем разбивку по ролям для этой задачи
+                if (!empty($taskRolesTime)) {
+                    $report .= "Время по ролям:\n";
+                    foreach ($taskRolesTime as $role => $timeData) {
+                        $decimalHours = $timeData['decimal_hours'];
+                        $hours = floor($decimalHours);
+                        $minutes = round(($decimalHours - $hours) * 60);
+                        $report .= "  • $role: {$hours} ч {$minutes} м ({$decimalHours} ч)\n";
+                    }
+                } else {
+                    $report .= "Время по ролям: не найдено\n";
+                }
+
+                $report .= "\n";
+            }
+
+            $report .= "ИТОГО:\n";
+            $report .= "Всего задач: $totalTasks\n";
+            $report .= "Общее время: {$totalTime} ч\n\n";
+
+            return $report;
+
+        } catch (Exception $e) {
+            $this->logger->log("Ошибка при генерации детального отчета по задачам для проекта $projectId: " . $e->getMessage());
+            return "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n" . 
+                   str_repeat("-", 30) . "\n" .
+                   "Ошибка при получении данных: " . $e->getMessage() . "\n\n";
+        }
+    }
+
+    /**
      * Получает данные о времени по проекту с разбивкой по ролям
      */
-    public function getProjectTimeData($projectId, $defaultPrice = null): array
+    public function getProjectTimeData($projectId, $companyData = null): array
     {
         try {
             $tasks = $this->getProjectTasks($projectId);
@@ -328,9 +419,11 @@ class DealCreator
 
             $rolesTime = [];
             $totalHours = 0;
+            $globalUserRoles = []; // Глобальное отслеживание ролей пользователей
+            $globalRoleCounters = []; // Глобальные счетчики для одинаковых ролей
 
             foreach ($tasks as $task) {
-                $taskTimeData = $this->getTaskTimeByRoles($task['id']);
+                $taskTimeData = $this->getTaskTimeByRolesWithGlobalNumbering($task['id'], $globalUserRoles, $globalRoleCounters);
                 
                 foreach ($taskTimeData as $role => $timeData) {
                     if (!isset($rolesTime[$role])) {
@@ -364,7 +457,7 @@ class DealCreator
             $totalHours = array_sum(array_column($rolesTime, 'decimal_hours'));
             
             // Рассчитываем стоимость
-            $totalCost = $this->calculateTotalCost($rolesTime, $defaultPrice);
+            $totalCost = $this->calculateTotalCost($rolesTime, $companyData);
 
             return [
                 'total_hours' => round($totalHours, 2),
@@ -486,9 +579,64 @@ class DealCreator
     }
 
     /**
-     * Получает время по ролям для конкретной задачи
+     * Получает время по ролям для конкретной задачи с нумерацией одинаковых ролей
      */
     private function getTaskTimeByRoles($taskId): array
+    {
+        $method = 'task.elapseditem.getlist';
+        $params = ['TASKID' => $taskId];
+        
+        // Добавляем задержку перед каждым API вызовом
+        apiDelay();
+        
+        $response = $this->call->callBitrix24API($method, $params);
+        $elapsedItems = $response['result'] ?? [];
+
+        $rolesTime = [];
+        $userRoles = []; // Отслеживаем роли пользователей
+        $roleCounters = []; // Счетчики для одинаковых ролей
+        $firstDay = (new DateTime("first day of last month"))->setTime(0, 0, 0);
+        $lastDay = (new DateTime("last day of last month"))->setTime(23, 59, 59);
+
+        foreach ($elapsedItems as $item) {
+            if (empty($item['CREATED_DATE'])) {
+                continue;
+            }
+
+            $createdDate = new DateTime($item['CREATED_DATE']);
+            if ($createdDate < $firstDay || $createdDate > $lastDay) {
+                continue;
+            }
+
+            // Получаем роль пользователя
+            $userId = $item['USER_ID'] ?? 0;
+            $baseRole = $this->getUserRole($userId);
+            
+            // Определяем уникальную роль с номером
+            $uniqueRole = $this->getUniqueRoleForUser($userId, $baseRole, $userRoles, $roleCounters);
+            
+            $seconds = (int)($item['SECONDS'] ?? 0);
+            $hours = $seconds / 3600;
+            
+            // Округляем до часа, если меньше часа
+            if ($hours < MIN_HOUR_ROUNDING && $hours > ROUNDING_THRESHOLD) {
+                $hours = MIN_HOUR_ROUNDING;
+            }
+
+            if (!isset($rolesTime[$uniqueRole])) {
+                $rolesTime[$uniqueRole] = ['decimal_hours' => 0];
+            }
+            
+            $rolesTime[$uniqueRole]['decimal_hours'] += $hours;
+        }
+
+        return $rolesTime;
+    }
+
+    /**
+     * Получает время по ролям для конкретной задачи с глобальной нумерацией
+     */
+    private function getTaskTimeByRolesWithGlobalNumbering($taskId, &$globalUserRoles, &$globalRoleCounters): array
     {
         $method = 'task.elapseditem.getlist';
         $params = ['TASKID' => $taskId];
@@ -515,7 +663,10 @@ class DealCreator
 
             // Получаем роль пользователя
             $userId = $item['USER_ID'] ?? 0;
-            $role = $this->getUserRole($userId);
+            $baseRole = $this->getUserRole($userId);
+            
+            // Определяем уникальную роль с глобальным номером
+            $uniqueRole = $this->getUniqueRoleForUser($userId, $baseRole, $globalUserRoles, $globalRoleCounters);
             
             $seconds = (int)($item['SECONDS'] ?? 0);
             $hours = $seconds / 3600;
@@ -525,18 +676,48 @@ class DealCreator
                 $hours = MIN_HOUR_ROUNDING;
             }
 
-            if (!isset($rolesTime[$role])) {
-                $rolesTime[$role] = ['decimal_hours' => 0];
+            if (!isset($rolesTime[$uniqueRole])) {
+                $rolesTime[$uniqueRole] = ['decimal_hours' => 0];
             }
             
-            $rolesTime[$role]['decimal_hours'] += $hours;
+            $rolesTime[$uniqueRole]['decimal_hours'] += $hours;
         }
 
         return $rolesTime;
     }
 
     /**
-     * Получает роль пользователя
+     * Получает уникальную роль для пользователя с номером
+     */
+    private function getUniqueRoleForUser($userId, $baseRole, &$userRoles, &$roleCounters): string
+    {
+        // Если пользователь уже обработан, возвращаем его роль
+        if (isset($userRoles[$userId])) {
+            return $userRoles[$userId];
+        }
+
+        // Инициализируем счетчик для роли, если его еще нет
+        if (!isset($roleCounters[$baseRole])) {
+            $roleCounters[$baseRole] = 0;
+        }
+
+        // Увеличиваем счетчик
+        $roleCounters[$baseRole]++;
+
+        // Формируем уникальную роль
+        $uniqueRole = $baseRole;
+        if ($roleCounters[$baseRole] > 1) {
+            $uniqueRole = $baseRole . ' #' . $roleCounters[$baseRole];
+        }
+
+        // Сохраняем роль для пользователя
+        $userRoles[$userId] = $uniqueRole;
+
+        return $uniqueRole;
+    }
+
+    /**
+     * Получает роль пользователя на основе должности
      */
     private function getUserRole($userId): string
     {
@@ -558,29 +739,89 @@ class DealCreator
         ]);
 
         $user = $result['result'][0] ?? [];
-        $userName = trim(($user['NAME'] ?? '') . ' ' . ($user['LAST_NAME'] ?? ''));
+        $userPosition = $user['WORK_POSITION'] ?? '';
         
-        if (empty($userName)) {
-            $userName = 'Пользователь #' . $userId;
-        }
+        // Определяем роль на основе должности
+        $role = $this->mapPositionToRole($userPosition);
         
         // Кэшируем результат
-        $this->userRoleCache[$userId] = $userName;
+        $this->userRoleCache[$userId] = $role;
         
-        // Здесь можно добавить логику определения роли по должности или отделу
-        // Пока возвращаем имя пользователя
-        return $userName;
+        return $role;
+    }
+
+    /**
+     * Маппинг должностей на роли
+     */
+    private function mapPositionToRole($position): string
+    {
+        if (empty($position)) {
+            return 'Неизвестно';
+        }
+
+        $position = strtolower(trim($position));
+
+        // Маппинг должностей на роли согласно UF_CRM полям
+        $positionMappings = [
+            'frontend' => 'Front-end разработчик',
+            'front-end' => 'Front-end разработчик',
+            'фронтенд' => 'Front-end разработчик',
+            'фронт-енд' => 'Front-end разработчик',
+            'frontend разработчик' => 'Front-end разработчик',
+            'front-end разработчик' => 'Front-end разработчик',
+            
+            'backend' => 'Back-end разработчик',
+            'back-end' => 'Back-end разработчик',
+            'бэкенд' => 'Back-end разработчик',
+            'бэк-енд' => 'Back-end разработчик',
+            'backend разработчик' => 'Back-end разработчик',
+            'back-end разработчик' => 'Back-end разработчик',
+            
+            'дизайнер' => 'Дизайнер',
+            'designer' => 'Дизайнер',
+            'веб-дизайнер' => 'Дизайнер',
+            'web designer' => 'Дизайнер',
+            'ui/ux дизайнер' => 'Дизайнер',
+            'ui/ux designer' => 'Дизайнер',
+            
+            'проект-менеджер' => 'Проект-менеджер',
+            'project manager' => 'Проект-менеджер',
+            'пм' => 'Проект-менеджер',
+            'pm' => 'Проект-менеджер',
+            'менеджер проекта' => 'Проект-менеджер',
+            
+            'контент-менеджер' => 'Контент-менеджер',
+            'content manager' => 'Контент-менеджер',
+            'контент менеджер' => 'Контент-менеджер',
+            'км' => 'Контент-менеджер',
+            'cm' => 'Контент-менеджер'
+        ];
+
+        // Ищем точное совпадение
+        if (isset($positionMappings[$position])) {
+            return $positionMappings[$position];
+        }
+
+        // Ищем частичное совпадение
+        foreach ($positionMappings as $key => $role) {
+            if (strpos($position, $key) !== false) {
+                return $role;
+            }
+        }
+
+        // Если не найдено совпадение, возвращаем исходную должность
+        return ucfirst($position);
     }
 
     /**
      * Рассчитывает общую стоимость работ
      */
-    private function calculateTotalCost($rolesTime, $defaultPrice = null): float
+    private function calculateTotalCost($rolesTime, $companyData = null): float
     {
         $totalCost = 0;
         
         foreach ($rolesTime as $role => $timeData) {
-            $rate = getRoleRate($role, $defaultPrice);
+            $rate = getRoleRate($role, $companyData);
             $totalCost += $timeData['decimal_hours'] * $rate;
         }
 
