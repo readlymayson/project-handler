@@ -51,21 +51,49 @@ define('API_MAX_RETRIES', 3); // Максимальное количество �
 define('API_RETRY_DELAY', 2.0); // Задержка перед повтором в секундах
 
 /**
- * Получить тариф для роли из поля UF_CRM_PRICE_DEFAULT сделки
+ * Получить тариф для роли из соответствующих UF_CRM полей компании
  */
-function getRoleRate($role, $defaultPrice = null): float
+function getRoleRate($role, $companyData = null): float
 {
-    // Если переданная цена валидна, используем её
-    if ($defaultPrice !== null) {
-        // Убираем |RUB из цены если есть
-        $cleanPrice = is_string($defaultPrice) ? str_replace('|RUB', '', $defaultPrice) : $defaultPrice;
-        if (is_numeric($cleanPrice) && $cleanPrice > 0) {
-            return (float)$cleanPrice;
+    // Если переданы данные компании, пытаемся получить ставку для конкретной роли
+    if ($companyData && is_array($companyData)) {
+        $roleRateField = getRoleRateField($role);
+        if ($roleRateField && isset($companyData[$roleRateField])) {
+            $rate = $companyData[$roleRateField];
+            // Убираем |RUB из цены если есть
+            $cleanRate = is_string($rate) ? str_replace('|RUB', '', $rate) : $rate;
+            if (is_numeric($cleanRate) && $cleanRate > 0) {
+                return (float)$cleanRate;
+            }
         }
     }
     
-    // Иначе используем дефолтную цену из конфига
+    // Если не найдена ставка для роли, используем дефолтную цену
     return DEFAULT_HOURLY_RATE;
+}
+
+/**
+ * Получить название UF_CRM поля для ставки роли
+ */
+function getRoleRateField($role): ?string
+{
+    // Извлекаем базовую роль из роли с номером (например, "Front-end разработчик #2" -> "Front-end разработчик")
+    $baseRole = $role;
+    
+    // Проверяем, есть ли номер в роли
+    if (strpos($role, ' #') !== false) {
+        $baseRole = trim(substr($role, 0, strpos($role, ' #')));
+    }
+    
+    $roleFields = [
+        'Front-end разработчик' => 'UF_CRM_FRONTEND_RATE',
+        'Back-end разработчик' => 'UF_CRM_BACKEND_RATE',
+        'Дизайнер' => 'UF_CRM_DESIGNER_RATE',
+        'Проект-менеджер' => 'UF_CRM_PM_RATE',
+        'Контент-менеджер' => 'UF_CRM_CONTENT_MANAGER_RATE'
+    ];
+    
+    return $roleFields[$baseRole] ?? null;
 }
 
 /**
