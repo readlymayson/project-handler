@@ -50,6 +50,31 @@ define('API_TIMEOUT', 30); // Таймаут для API вызовов в сек
 define('API_MAX_RETRIES', 3); // Максимальное количество повторов при ошибке
 define('API_RETRY_DELAY', 2.0); // Задержка перед повтором в секундах
 
+// Настройки для генерации документов через Bitrix24 Document Generator
+// ВАЖНО: Сначала создайте шаблоны документов в Bitrix24 (CRM -> Настройки -> Шаблоны документов)
+// Затем укажите их ID здесь. Если ID не указан (0), документ генерироваться не будет.
+define('REPORT_TEMPLATE_ID', 0); // ID шаблона Excel отчета
+define('INVOICE_TEMPLATE_ID', 0); // ID шаблона счета
+define('ACT_TEMPLATE_ID', 0); // ID шаблона акта
+
+// Префиксы для номеров документов
+define('INVOICE_NUMBER_PREFIX', 'INV'); // Префикс для номеров счетов
+define('ACT_NUMBER_PREFIX', 'ACT'); // Префикс для номеров актов
+
+// Настройки компании-исполнителя (по умолчанию)
+define('COMPANY_NAME', 'ООО "Техноресурс"');
+
+// Ставка НДС
+define('VAT_RATE', 'Без НДС');
+
+// Настройки договоров и приложений по умолчанию
+// Эти значения используются если в компании не заполнены соответствующие UF поля:
+// UF_CRM_CONTRACT_NUMBER, UF_CRM_CONTRACT_DATE, UF_CRM_APPENDIX_NUMBER, UF_CRM_APPENDIX_DATE
+define('DEFAULT_CONTRACT_NUMBER', '№ ТЕХНОРЕСУРС/23');
+define('DEFAULT_CONTRACT_DATE', '12.12.23');
+define('DEFAULT_APPENDIX_NUMBER', '№ 3');
+define('DEFAULT_APPENDIX_DATE', '16.05.24');
+
 /**
  * Получить тариф для роли из соответствующих UF_CRM полей компании
  */
