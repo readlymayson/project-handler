@@ -7,11 +7,13 @@ class DealCreator
     private Usual $call;
     private Logger $logger;
     private array $userRoleCache = []; // Кэш для ролей пользователей
+    private ?DocumentGenerator $documentGenerator = null; // Генератор документов
 
-    public function __construct($call, Logger $logger)
+    public function __construct($call, Logger $logger, DocumentGenerator $documentGenerator = null)
     {
         $this->call = $call;
         $this->logger = $logger;
+        $this->documentGenerator = $documentGenerator;
     }
 
     /**
@@ -133,6 +135,33 @@ class DealCreator
             }
 
             $newDealId = $result['result'];
+            
+            // Генерируем и прикрепляем документы
+            if ($this->documentGenerator !== null) {
+                $documentsResult = $this->documentGenerator->generateDocumentsForDeal(
+                    $newDealId,
+                    $company,
+                    $projectTimeData,
+                    $projectId
+                );
+                
+                if ($documentsResult['status'] === 'success') {
+                    $this->logger->log([
+                        'type' => 'documents_generation',
+                        'status' => 'success',
+                        'deal_id' => $newDealId,
+                        'documents' => array_keys($documentsResult['documents'] ?? []),
+                        'message' => 'Документы успешно сгенерированы и прикреплены'
+                    ]);
+                } else {
+                    $this->logger->log([
+                        'type' => 'documents_generation',
+                        'status' => 'error',
+                        'deal_id' => $newDealId,
+                        'message' => $documentsResult['message'] ?? 'Неизвестная ошибка при генерации документов'
+                    ]);
+                }
+            }
             
             // Отправляем уведомления
             if (NOTIFY_ON_DEAL_CREATION) {

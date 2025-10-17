@@ -1,0 +1,16 @@
+{
+    "name": "akvilon/project-handler",
+    "description": "Система управления проектами и сделками в Bitrix24",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "classmap": [
+            "class.php",
+            "DealCreator.php",
+            "DocumentGenerator.php",
+            "UF_CRM_FieldChecker.php"
+        ]
+    }
+}

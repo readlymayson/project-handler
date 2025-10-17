@@ -1,0 +1,21 @@
+# Composer
+/vendor/
+composer.lock
+
+# Логи
+/logs/*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Временные файлы
+*.tmp
+*.temp
