@@ -612,54 +612,43 @@ class DealCreator
      */
     private function getTaskTimeByRoles($taskId): array
     {
-        $method = 'task.elapseditem.getlist';
-        $params = ['TASKID' => $taskId];
-        
-        // Добавляем задержку перед каждым API вызовом
+        // Вся затрата времени в задаче учитывается в пользу исполнителя задачи
+        // 1) Получаем суммарное время за прошлый месяц по задаче
         apiDelay();
-        
-        $response = $this->call->callBitrix24API($method, $params);
+        $response = $this->call->callBitrix24API('task.elapseditem.getlist', ['TASKID' => $taskId]);
         $elapsedItems = $response['result'] ?? [];
 
-        $rolesTime = [];
-        $userRoles = []; // Отслеживаем роли пользователей
-        $roleCounters = []; // Счетчики для одинаковых ролей
         $firstDay = (new DateTime("first day of last month"))->setTime(0, 0, 0);
         $lastDay = (new DateTime("last day of last month"))->setTime(23, 59, 59);
 
+        $totalHours = 0;
         foreach ($elapsedItems as $item) {
             if (empty($item['CREATED_DATE'])) {
                 continue;
             }
-
             $createdDate = new DateTime($item['CREATED_DATE']);
             if ($createdDate < $firstDay || $createdDate > $lastDay) {
                 continue;
             }
-
-            // Получаем роль пользователя
-            $userId = $item['USER_ID'] ?? 0;
-            $baseRole = $this->getUserRole($userId);
-            
-            // Определяем уникальную роль с номером
-            $uniqueRole = $this->getUniqueRoleForUser($userId, $baseRole, $userRoles, $roleCounters);
-            
             $seconds = (int)($item['SECONDS'] ?? 0);
             $hours = $seconds / 3600;
-            
-            // Округляем до часа, если меньше часа
             if ($hours < MIN_HOUR_ROUNDING && $hours > ROUNDING_THRESHOLD) {
                 $hours = MIN_HOUR_ROUNDING;
             }
-
-            if (!isset($rolesTime[$uniqueRole])) {
-                $rolesTime[$uniqueRole] = ['decimal_hours' => 0];
-            }
-            
-            $rolesTime[$uniqueRole]['decimal_hours'] += $hours;
+            $totalHours += $hours;
         }
 
-        return $rolesTime;
+        if ($totalHours <= 0) {
+            return [];
+        }
+
+        // 2) Получаем исполнителя задачи и его роль
+        $responsibleId = $this->getTaskResponsibleId($taskId);
+        $role = $this->getUserRole($responsibleId);
+
+        return [
+            $role => ['decimal_hours' => $totalHours]
+        ];
     }
 
     /**
@@ -667,52 +656,62 @@ class DealCreator
      */
     private function getTaskTimeByRolesWithGlobalNumbering($taskId, &$globalUserRoles, &$globalRoleCounters): array
     {
-        $method = 'task.elapseditem.getlist';
-        $params = ['TASKID' => $taskId];
-        
-        // Добавляем задержку перед каждым API вызовом
+        // Вся затрата времени в задаче учитывается в пользу исполнителя задачи (с глобальной нумерацией роли)
         apiDelay();
-        
-        $response = $this->call->callBitrix24API($method, $params);
+        $response = $this->call->callBitrix24API('task.elapseditem.getlist', ['TASKID' => $taskId]);
         $elapsedItems = $response['result'] ?? [];
 
-        $rolesTime = [];
         $firstDay = (new DateTime("first day of last month"))->setTime(0, 0, 0);
         $lastDay = (new DateTime("last day of last month"))->setTime(23, 59, 59);
 
+        $totalHours = 0;
         foreach ($elapsedItems as $item) {
             if (empty($item['CREATED_DATE'])) {
                 continue;
             }
-
             $createdDate = new DateTime($item['CREATED_DATE']);
             if ($createdDate < $firstDay || $createdDate > $lastDay) {
                 continue;
             }
-
-            // Получаем роль пользователя
-            $userId = $item['USER_ID'] ?? 0;
-            $baseRole = $this->getUserRole($userId);
-            
-            // Определяем уникальную роль с глобальным номером
-            $uniqueRole = $this->getUniqueRoleForUser($userId, $baseRole, $globalUserRoles, $globalRoleCounters);
-            
             $seconds = (int)($item['SECONDS'] ?? 0);
             $hours = $seconds / 3600;
-            
-            // Округляем до часа, если меньше часа
             if ($hours < MIN_HOUR_ROUNDING && $hours > ROUNDING_THRESHOLD) {
                 $hours = MIN_HOUR_ROUNDING;
             }
-
-            if (!isset($rolesTime[$uniqueRole])) {
-                $rolesTime[$uniqueRole] = ['decimal_hours' => 0];
-            }
-            
-            $rolesTime[$uniqueRole]['decimal_hours'] += $hours;
+            $totalHours += $hours;
         }
 
-        return $rolesTime;
+        if ($totalHours <= 0) {
+            return [];
+        }
+
+        // Получаем исполнителя задачи и маппим к глобально-нумерованной роли
+        $responsibleId = $this->getTaskResponsibleId($taskId);
+        $baseRole = $this->getUserRole($responsibleId);
+        $uniqueRole = $this->getUniqueRoleForUser($responsibleId, $baseRole, $globalUserRoles, $globalRoleCounters);
+
+        return [
+            $uniqueRole => ['decimal_hours' => $totalHours]
+        ];
+    }
+
+    /**
+     * Получает ID ответственного (исполнителя) задачи
+     */
+    private function getTaskResponsibleId($taskId): int
+    {
+        try {
+            apiDelay();
+            $result = $this->call->callBitrix24API('tasks.task.get', [
+                'taskId' => $taskId
+            ]);
+            $task = $result['result']['task'] ?? [];
+            $responsibleId = (int)($task['responsibleId'] ?? $task['RESPONSIBLE_ID'] ?? 0);
+            return $responsibleId ?: 0;
+        } catch (Exception $e) {
+            $this->logger->log("Ошибка получения RESPONSIBLE_ID для задачи $taskId: " . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
