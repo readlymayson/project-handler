@@ -40,9 +40,6 @@ try {
     $dealCreator = new DealCreator($call, $logger, $documentGenerator);
 
     $companies = $check->getCompaniesWithProjectLink();
-    $today = new DateTime();
-    $firstDayOfMonth = new DateTime('first day of this month');
-    $isFirstDayOfMonth = $today->format('Y-m-d') === $firstDayOfMonth->format('Y-m-d');
     
     foreach ($companies as $company) {
         $isStop = false;
@@ -56,46 +53,60 @@ try {
         $company['ASSIGNED_BY_ID'] = $company['ASSIGNED_BY_ID'] ?? 0;
         $company['UF_CRM_HOURS_LIMIT'] = $company['UF_CRM_HOURS_LIMIT'] ?? 0;
         
-        // Создание задачи "Счет и акт"
-        $resultTask = $check->checkFirstDateForTask($company, $dealCreator);
-        $logger->log($resultTask);
-        
-        // Создание сделки "Работы за предыдущий месяц" в первый день месяца
-        if ($isFirstDayOfMonth && !empty($company['UF_CRM_PROJECT_LINK'])) {
-            $projectId = $dealCreator->extractProjectId($company['UF_CRM_PROJECT_LINK']);
-            
-            if ($projectId > 0) {
-                $projectTimeData = $dealCreator->getProjectTimeData($projectId, $company);
+        // Создание сделки "Работы за предыдущий месяц"
+        if (!empty($company['UF_CRM_PROJECT_LINK'])) {
+            try {
+                $projectId = $dealCreator->extractProjectId($company['UF_CRM_PROJECT_LINK']);
                 
-                // Создаем сделку только если есть затраченное время
-                if ($projectTimeData['total_hours'] > 0) {
-                    $dealResult = $dealCreator->createMonthlyWorkDeal($company, $projectTimeData);
-                    $logger->log($dealResult);
+                if ($projectId > 0) {
+                    $projectTimeData = $dealCreator->getProjectTimeData($projectId, $company);
+                    
+                    // Создаем сделку только если есть затраченное время
+                    if ($projectTimeData['total_hours'] > 0) {
+                        $dealResult = $dealCreator->createMonthlyWorkDeal($company, $projectTimeData);
+                        $logger->log($dealResult);
+                    } else {
+                        $logger->log([
+                            'type' => 'deal_creation',
+                            'status' => 'skipped',
+                            'company_id' => $company['ID'],
+                            'project_link' => $company['UF_CRM_PROJECT_LINK'],
+                            'project_id' => $projectId,
+                            'message' => 'Сделка не создана - нет затраченного времени в предыдущем месяце'
+                        ]);
+                    }
                 } else {
                     $logger->log([
                         'type' => 'deal_creation',
-                        'status' => 'skipped',
+                        'status' => 'error',
                         'company_id' => $company['ID'],
                         'project_link' => $company['UF_CRM_PROJECT_LINK'],
-                        'project_id' => $projectId,
-                        'message' => 'Сделка не создана - нет затраченного времени в предыдущем месяце'
+                        'message' => 'Не удалось извлечь ID проекта из ссылки'
                     ]);
                 }
-            } else {
+            } catch (Exception $e) {
                 $logger->log([
                     'type' => 'deal_creation',
                     'status' => 'error',
                     'company_id' => $company['ID'],
-                    'project_link' => $company['UF_CRM_PROJECT_LINK'],
-                    'message' => 'Не удалось извлечь ID проекта из ссылки'
+                    'message' => 'Ошибка при создании сделки: ' . $e->getMessage()
                 ]);
             }
         }
         
-        // Проверка лимитов часов (работает в течение всего месяца, если не было уведомления в текущем месяце)
+        // Проверка лимитов часов
         if (!empty($company['UF_CRM_PROJECT_LINK']) && !$isStop) {
-            $result = $check->checkProjectHours($company, $dealCreator);
-            $logger->log($result);
+            try {
+                $result = $check->checkProjectHours($company, $dealCreator);
+                $logger->log($result);
+            } catch (Exception $e) {
+                $logger->log([
+                    'type' => 'hours_check',
+                    'status' => 'error',
+                    'company_id' => $company['ID'],
+                    'message' => 'Ошибка при проверке лимитов часов: ' . $e->getMessage()
+                ]);
+            }
         } else {
             if ($isStop) {
                 $logger->log(['info' => "Уведомление о превышении лимита в этом месяце уже отправлялось. company: #{$company['ID']} {$company['TITLE']}"]);
@@ -105,5 +116,13 @@ try {
         }
     }
 } catch (Exception $e) {
-    echo $e->getMessage();
+    // Логируем критические ошибки инициализации
+    if (isset($logger)) {
+        $logger->log([
+            'type' => 'critical_error',
+            'status' => 'error',
+            'message' => 'Критическая ошибка инициализации: ' . $e->getMessage()
+        ]);
+    }
+    echo "Критическая ошибка: " . $e->getMessage();
 }
