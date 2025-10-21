@@ -221,6 +221,206 @@ class UF_CRM_FieldChecker
                 'DEFAULT_VALUE' => '',
                 'CURRENCY' => 'RUB'
             ]
+        ],
+        'UF_CRM_DEFAULT_RATE' => [
+            'name' => 'Базовая ставка по умолчанию',
+            'userTypeId' => 'money',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_DEFAULT_RATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Базовая ставка по умолчанию'
+            ],
+            'help_message' => 'Базовая ставка за час работы в рублях (используется если не заданы специфичные тарифы)',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CURRENCY' => 'RUB'
+            ]
+        ],
+        'UF_CRM_ORIGINAL_COMPANY' => [
+            'name' => 'Исходная компания',
+            'userTypeId' => 'string',
+            'entityId' => 'DEAL',
+            'xmlId' => 'UF_CRM_ORIGINAL_COMPANY',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Исходная компания'
+            ],
+            'help_message' => 'ID исходной компании для отслеживания связи',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_ORIGINAL_DEAL' => [
+            'name' => 'Исходная сделка',
+            'userTypeId' => 'string',
+            'entityId' => 'DEAL',
+            'xmlId' => 'UF_CRM_ORIGINAL_DEAL',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Исходная сделка'
+            ],
+            'help_message' => 'ID исходной сделки для отслеживания связи',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_CONTRACT_NUMBER' => [
+            'name' => 'Номер договора',
+            'userTypeId' => 'string',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_CONTRACT_NUMBER',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Номер договора'
+            ],
+            'help_message' => 'Номер договора для генерации документов',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_CONTRACT_DATE' => [
+            'name' => 'Дата договора',
+            'userTypeId' => 'string',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_CONTRACT_DATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Дата договора'
+            ],
+            'help_message' => 'Дата договора для генерации документов',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_APPENDIX_NUMBER' => [
+            'name' => 'Номер приложения',
+            'userTypeId' => 'string',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_APPENDIX_NUMBER',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Номер приложения'
+            ],
+            'help_message' => 'Номер приложения к договору для генерации документов',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_APPENDIX_DATE' => [
+            'name' => 'Дата приложения',
+            'userTypeId' => 'string',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_APPENDIX_DATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Дата приложения'
+            ],
+            'help_message' => 'Дата приложения к договору для генерации документов',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'SIZE' => 50,
+                'ROWS' => 1,
+                'MIN_LENGTH' => 0,
+                'MAX_LENGTH' => 255,
+                'REGEXP' => ''
+            ]
+        ],
+        'UF_CRM_TASK' => [
+            'name' => 'Привязка к задаче',
+            'userTypeId' => 'crm',
+            'entityId' => 'TASK',
+            'xmlId' => 'UF_CRM_TASK',
+            'sort' => 100,
+            'multiple' => 'Y',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Привязка к задаче'
+            ],
+            'help_message' => 'Привязка к задаче в CRM',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CRM_FIELDS' => ['C_']
+            ]
         ]
     ];
 

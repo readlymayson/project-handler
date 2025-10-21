@@ -51,11 +51,21 @@ define('API_MAX_RETRIES', 3); // Максимальное количество �
 define('API_RETRY_DELAY', 2.0); // Задержка перед повтором в секундах
 
 // Настройки для генерации документов через Bitrix24 Document Generator
+define('ENABLE_DOCUMENT_GENERATOR', false); // Включить/выключить генерацию документов
+define('AUTO_GENERATE_DOCUMENTS', false); // Автоматически генерировать документы при создании сделки
+define('GENERATE_ON_DEAL_CREATION', false); // Генерировать документы сразу при создании сделки
+define('GENERATE_ON_DEAL_UPDATE', false); // Генерировать документы при обновлении сделки
+
 // ВАЖНО: Сначала создайте шаблоны документов в Bitrix24 (CRM -> Настройки -> Шаблоны документов)
 // Затем укажите их ID здесь. Если ID не указан (0), документ генерироваться не будет.
 define('REPORT_TEMPLATE_ID', 0); // ID шаблона Excel отчета
 define('INVOICE_TEMPLATE_ID', 0); // ID шаблона счета
 define('ACT_TEMPLATE_ID', 0); // ID шаблона акта
+
+// Настройки генерации документов
+define('DOCUMENT_GENERATION_TIMEOUT', 60); // Таймаут генерации документа в секундах
+define('DOCUMENT_RETRY_ATTEMPTS', 3); // Количество попыток генерации документа
+define('DOCUMENT_RETRY_DELAY', 5); // Задержка между попытками в секундах
 
 // Префиксы для номеров документов
 define('INVOICE_NUMBER_PREFIX', 'INV'); // Префикс для номеров счетов
