@@ -360,9 +360,7 @@ class DealCreator
         
         // Итоговая информация
         $comment .= str_repeat("=", 40) . "\n";
-        $comment .= "ИТОГО ПО ПРОЕКТУ:\n";
-        $comment .= "Общее время: " . number_format($totalHours, 2, ',', ' ') . " ч\n";
-        $comment .= "Общая стоимость: " . number_format($totalCost, 2, ',', ' ') . " руб\n";
+        $comment .= "Общая стоимость по проекту: " . number_format($totalCost, 2, ',', ' ') . " руб\n";
         
         return $comment;
     }
@@ -691,7 +689,7 @@ class DealCreator
     }
 
     /**
-     * Получает роль пользователя на основе должности
+     * Получает роль пользователя на основе пользовательского поля UF_USR_1756216886115
      */
     private function getUserRole($userId): string
     {
@@ -707,16 +705,17 @@ class DealCreator
         // Добавляем задержку перед API вызовом
         apiDelay();
 
-        // Получаем информацию о пользователе
+        // Получаем информацию о пользователе с пользовательским полем
         $result = $this->call->callBitrix24API('user.get', [
-            'filter' => ['ID' => $userId]
+            'filter' => ['ID' => $userId],
+            'select' => ['ID', 'NAME', 'LAST_NAME', 'UF_USR_1756216886115']
         ]);
 
         $user = $result['result'][0] ?? [];
-        $userPosition = $user['WORK_POSITION'] ?? '';
+        $userRoleField = $user['UF_USR_1756216886115'] ?? '';
         
-        // Определяем роль на основе должности
-        $role = $this->mapPositionToRole($userPosition);
+        // Определяем роль на основе пользовательского поля списка
+        $role = $this->mapUserFieldToRole($userRoleField);
         
         // Кэшируем результат
         $this->userRoleCache[$userId] = $role;
@@ -785,6 +784,110 @@ class DealCreator
 
         // Если не найдено совпадение, возвращаем исходную должность
         return ucfirst($position);
+    }
+
+    /**
+     * Маппинг пользовательского поля списка на роли
+     * Основан на реальных данных из системы
+     */
+    private function mapUserFieldToRole($userFieldValue): string
+    {
+        if (empty($userFieldValue)) {
+            return 'Неизвестно';
+        }
+
+        $userFieldValue = trim($userFieldValue);
+        
+        // Маппинг ID значений пользовательского поля на роли
+        // Основан на анализе реальных должностей пользователей
+        $userFieldMappings = [
+            // ID: 142 - Front-end разработчик
+            '142' => 'Front-end разработчик',
+            
+            // ID: 144 - Back-end разработчик  
+            '144' => 'Back-end разработчик',
+            
+            // ID: 146 - Дизайнер
+            '146' => 'Дизайнер',
+            
+            // ID: 148 - Контент-менеджер
+            '148' => 'Контент-менеджер',
+            
+            // ID: 140 - Проект-менеджер
+            '140' => 'Проект-менеджер',
+            
+            // ID: 150 - Директолог
+            '150' => 'Директолог',
+            
+            // ID: 152 - SEO-специалист
+            '152' => 'SEO-специалист',
+            
+            // ID: 154 - Юрист
+            '154' => 'Юрист',
+            
+            // ID: 156 - Битрикс24 разработчик
+            '156' => 'Битрикс24 разработчик'
+        ];
+
+        // Ищем точное совпадение по ID
+        if (isset($userFieldMappings[$userFieldValue])) {
+            return $userFieldMappings[$userFieldValue];
+        }
+
+        // Если значение не является ID, пробуем получить текстовое значение
+        if (is_numeric($userFieldValue)) {
+            $listValue = $this->getUserFieldListValue($userFieldValue);
+            if ($listValue) {
+                // Маппинг текстовых значений на роли
+                $textMappings = [
+                    'Front-end разработчик' => 'Front-end разработчик',
+                    'Back-end разработчик' => 'Back-end разработчик',
+                    'Дизайнер' => 'Дизайнер',
+                    'Проект-менеджер' => 'Проект-менеджер',
+                    'Контент-менеджер' => 'Контент-менеджер',
+                    'Директолог' => 'Директолог',
+                    'SEO-специалист' => 'SEO-специалист',
+                    'Юрист' => 'Юрист',
+                    'Битрикс24 разработчик' => 'Битрикс24 разработчик'
+                ];
+                
+                if (isset($textMappings[$listValue])) {
+                    return $textMappings[$listValue];
+                }
+            }
+        }
+
+        // Если не найдено совпадение, возвращаем исходное значение
+        return $userFieldValue;
+    }
+
+    /**
+     * Получает текстовое значение списка по ID
+     */
+    private function getUserFieldListValue($listId): ?string
+    {
+        try {
+            // Получаем информацию о пользовательском поле
+            $result = $this->call->callBitrix24API('userfield.get', [
+                'filter' => ['FIELD_NAME' => 'UF_USR_1756216886115']
+            ]);
+            
+            $userField = $result['result'][0] ?? [];
+            $enumValues = $userField['ENUM'] ?? [];
+            
+            // Ищем значение по ID
+            foreach ($enumValues as $enumValue) {
+                if ($enumValue['ID'] == $listId) {
+                    return $enumValue['VALUE'] ?? null;
+                }
+            }
+            
+            return null;
+            
+        } catch (Exception $e) {
+            $this->logger->log("Ошибка получения значения списка для ID $listId: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**

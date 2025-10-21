@@ -125,7 +125,12 @@ function getRoleRateField($role): ?string
         'Back-end разработчик' => 'UF_CRM_BACKEND_RATE',
         'Дизайнер' => 'UF_CRM_DESIGNER_RATE',
         'Проект-менеджер' => 'UF_CRM_PM_RATE',
-        'Контент-менеджер' => 'UF_CRM_CONTENT_MANAGER_RATE'
+        'Контент-менеджер' => 'UF_CRM_CONTENT_MANAGER_RATE',
+        // Новые роли с собственными полями тарифов
+        'Директолог' => 'UF_CRM_DIRECTOR_RATE',
+        'SEO-специалист' => 'UF_CRM_SEO_RATE',
+        'Юрист' => 'UF_CRM_LAWYER_RATE',
+        'Битрикс24 разработчик' => 'UF_CRM_BITRIX24_RATE'
     ];
     
     return $roleFields[$baseRole] ?? null;

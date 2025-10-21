@@ -222,6 +222,94 @@ class UF_CRM_FieldChecker
                 'CURRENCY' => 'RUB'
             ]
         ],
+        'UF_CRM_DIRECTOR_RATE' => [
+            'name' => 'Директолог (ставка в час)',
+            'userTypeId' => 'money',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_DIRECTOR_RATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Директолог (ставка в час)'
+            ],
+            'help_message' => 'Ставка Директолога за 1 час работы в рублях',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CURRENCY' => 'RUB'
+            ]
+        ],
+        'UF_CRM_SEO_RATE' => [
+            'name' => 'SEO-специалист (ставка в час)',
+            'userTypeId' => 'money',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_SEO_RATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'SEO-специалист (ставка в час)'
+            ],
+            'help_message' => 'Ставка SEO-специалиста за 1 час работы в рублях',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CURRENCY' => 'RUB'
+            ]
+        ],
+        'UF_CRM_LAWYER_RATE' => [
+            'name' => 'Юрист (ставка в час)',
+            'userTypeId' => 'money',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_LAWYER_RATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Юрист (ставка в час)'
+            ],
+            'help_message' => 'Ставка Юриста за 1 час работы в рублях',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CURRENCY' => 'RUB'
+            ]
+        ],
+        'UF_CRM_BITRIX24_RATE' => [
+            'name' => 'Битрикс24 разработчик (ставка в час)',
+            'userTypeId' => 'money',
+            'entityId' => 'COMPANY',
+            'xmlId' => 'UF_CRM_BITRIX24_RATE',
+            'sort' => 100,
+            'multiple' => 'N',
+            'mandatory' => 'N',
+            'showFilter' => 'Y',
+            'showInList' => 'Y',
+            'editInList' => 'Y',
+            'isSearchable' => 'Y',
+            'editFormLabel' => [
+                'en' => '',
+                'ru' => 'Битрикс24 разработчик (ставка в час)'
+            ],
+            'help_message' => 'Ставка Битрикс24 разработчика за 1 час работы в рублях',
+            'settings' => [
+                'DEFAULT_VALUE' => '',
+                'CURRENCY' => 'RUB'
+            ]
+        ],
         'UF_CRM_DEFAULT_RATE' => [
             'name' => 'Базовая ставка по умолчанию',
             'userTypeId' => 'money',
@@ -501,20 +589,20 @@ class UF_CRM_FieldChecker
     {
         try {
             $params = [
-                'fieldName' => $fieldCode,
-                'userTypeId' => $config['userTypeId'],
-                'xmlId' => $config['xmlId'],
-                'sort' => $config['sort'],
-                'multiple' => $config['multiple'],
-                'mandatory' => $config['mandatory'],
-                'showFilter' => $config['showFilter'],
-                'showInList' => $config['showInList'],
-                'editInList' => $config['editInList'],
-                'isSearchable' => $config['isSearchable'],
-                'editFormLabel' => $config['editFormLabel'],
-                'errorMessage' => '',
-                'helpMessage' => $config['help_message'],
-                'settings' => $config['settings']
+                'FIELD_NAME' => $fieldCode,
+                'USER_TYPE_ID' => $config['userTypeId'],
+                'XML_ID' => $config['xmlId'],
+                'SORT' => $config['sort'],
+                'MULTIPLE' => $config['multiple'],
+                'MANDATORY' => $config['mandatory'],
+                'SHOW_FILTER' => $config['showFilter'],
+                'SHOW_IN_LIST' => $config['showInList'],
+                'EDIT_IN_LIST' => $config['editInList'],
+                'IS_SEARCHABLE' => $config['isSearchable'],
+                'EDIT_FORM_LABEL' => $config['editFormLabel'],
+                'ERROR_MESSAGE' => '',
+                'HELP_MESSAGE' => $config['help_message'],
+                'SETTINGS' => $config['settings']
             ];
 
             $result = $this->call->callBitrix24API('crm.' . strtolower($config['entityId']) . '.userfield.add', [
