@@ -21,6 +21,43 @@ class DocumentGenerator
     }
 
     /**
+     * Проверяет настройки генератора документов
+     * 
+     * @return array Статус настроек
+     */
+    public function checkDocumentGeneratorSettings(): array
+    {
+        $settings = [
+            'enabled' => ENABLE_DOCUMENT_GENERATOR,
+            'auto_generate' => AUTO_GENERATE_DOCUMENTS,
+            'generate_on_creation' => GENERATE_ON_DEAL_CREATION,
+            'generate_on_update' => GENERATE_ON_DEAL_UPDATE,
+            'templates' => [
+                'report' => REPORT_TEMPLATE_ID,
+                'invoice' => INVOICE_TEMPLATE_ID,
+                'act' => ACT_TEMPLATE_ID
+            ],
+            'timeout' => DOCUMENT_GENERATION_TIMEOUT,
+            'retry_attempts' => DOCUMENT_RETRY_ATTEMPTS,
+            'retry_delay' => DOCUMENT_RETRY_DELAY
+        ];
+
+        // Проверяем, настроены ли шаблоны
+        $configuredTemplates = 0;
+        foreach ($settings['templates'] as $template => $id) {
+            if ($id > 0) {
+                $configuredTemplates++;
+            }
+        }
+
+        $settings['configured_templates'] = $configuredTemplates;
+        $settings['total_templates'] = count($settings['templates']);
+        $settings['is_ready'] = $settings['enabled'] && $configuredTemplates > 0;
+
+        return $settings;
+    }
+
+    /**
      * Генерирует все документы для сделки через Bitrix24 Document Generator
      * 
      * @param int $dealId ID сделки
@@ -31,6 +68,16 @@ class DocumentGenerator
      */
     public function generateDocumentsForDeal($dealId, $company, $projectTimeData, $projectId): array
     {
+        // Проверяем, включена ли генерация документов
+        if (!ENABLE_DOCUMENT_GENERATOR) {
+            $this->logger->info("Генерация документов отключена в настройках");
+            return [
+                'status' => 'disabled',
+                'message' => 'Генерация документов отключена в настройках',
+                'documents' => []
+            ];
+        }
+        
         try {
             $documents = [];
             

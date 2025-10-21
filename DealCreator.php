@@ -137,7 +137,7 @@ class DealCreator
             $newDealId = $result['result'];
             
             // Генерируем и прикрепляем документы
-            if ($this->documentGenerator !== null) {
+            if ($this->documentGenerator !== null && ENABLE_DOCUMENT_GENERATOR) {
                 $documentsResult = $this->documentGenerator->generateDocumentsForDeal(
                     $newDealId,
                     $company,
@@ -328,107 +328,53 @@ class DealCreator
     }
 
     /**
-     * Форматирует комментарий с разбивкой времени по ролям и детальным отчетом по задачам
+     * Форматирует комментарий с разбивкой времени по исполнителям
      */
     private function formatTimeComment($rolesTime, $projectId = null): string
     {
         $comment = "Учет времени по проекту:\n\n";
         
-        // Добавляем детальный отчет по задачам, если передан ID проекта
-        if ($projectId) {
-            $comment .= $this->generateDetailedTaskReport($projectId);
-            $comment .= "\n" . str_repeat("=", 50) . "\n\n";
-        }
+        // Сводка по исполнителям (ролям)
+        $comment .= "СВОДКА ПО ИСПОЛНИТЕЛЯМ:\n";
+        $comment .= str_repeat("-", 30) . "\n";
         
-        // Общая сводка по ролям
-        $comment .= "СВОДКА ПО РОЛЯМ:\n";
-        $comment .= str_repeat("-", 20) . "\n";
+        $totalHours = 0;
+        $totalCost = 0;
         
         foreach ($rolesTime as $role => $timeData) {
             $hours = $timeData['hours'];
             $minutes = $timeData['minutes'];
             $decimalHours = $timeData['decimal_hours'];
             
-            $comment .= "$role – {$hours} ч {$minutes} м ({$decimalHours} ч)\n";
+            // Рассчитываем стоимость для этой роли
+            $rate = getRoleRate($role);
+            $cost = $decimalHours * $rate;
+            $totalCost += $cost;
+            $totalHours += $decimalHours;
+            
+            $comment .= "$role:\n";
+            $comment .= "  Время: {$hours} ч {$minutes} м ({$decimalHours} ч)\n";
+            $comment .= "  Ставка: {$rate} руб/час\n";
+            $comment .= "  Стоимость: " . number_format($cost, 2, ',', ' ') . " руб\n\n";
         }
+        
+        // Итоговая информация
+        $comment .= str_repeat("=", 40) . "\n";
+        $comment .= "ИТОГО ПО ПРОЕКТУ:\n";
+        $comment .= "Общее время: " . number_format($totalHours, 2, ',', ' ') . " ч\n";
+        $comment .= "Общая стоимость: " . number_format($totalCost, 2, ',', ' ') . " руб\n";
         
         return $comment;
     }
 
     /**
      * Генерирует детальный отчет по задачам с разбивкой по ролям и времени
+     * @deprecated Метод больше не используется - отчет теперь группируется по исполнителям
      */
     private function generateDetailedTaskReport($projectId): string
     {
-        try {
-            $tasks = $this->getProjectTasks($projectId);
-            if (empty($tasks)) {
-                return "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n" . 
-                       str_repeat("-", 30) . "\n" .
-                       "Задач не найдено\n\n";
-            }
-
-            $report = "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n";
-            $report .= str_repeat("-", 30) . "\n\n";
-
-            $totalTasks = count($tasks);
-            $totalTime = 0;
-
-            foreach ($tasks as $index => $task) {
-                $taskId = $task['id'] ?? $task['ID'] ?? 0;
-                $taskTitle = $task['title'] ?? $task['TITLE'] ?? 'Без названия';
-                $timeSpent = $task['timeSpentInLogs'] ?? $task['TIME_SPENT_IN_LOGS'] ?? 0;
-                $timeEstimate = $task['timeEstimate'] ?? $task['TIME_ESTIMATE'] ?? 0;
-                $closedDate = $task['closedDate'] ?? $task['CLOSED_DATE'] ?? null;
-
-                // Получаем детальную информацию о времени по ролям для этой задачи
-                $taskRolesTime = $this->getTaskTimeByRoles($taskId);
-                
-                // Конвертируем секунды в часы
-                $hoursSpent = round($timeSpent / 3600, 2);
-                $hoursEstimate = round($timeEstimate / 3600, 2);
-                $totalTime += $hoursSpent;
-
-                $report .= "ЗАДАЧА #" . ($index + 1) . " (ID: $taskId)\n";
-                $report .= "Название: " . substr($taskTitle, 0, 60) . 
-                          (strlen($taskTitle) > 60 ? '...' : '') . "\n";
-                $report .= "Время затрачено: {$hoursSpent} ч\n";
-                $report .= "Время оценено: {$hoursEstimate} ч\n";
-                
-                if ($closedDate) {
-                    $report .= "Дата закрытия: $closedDate\n";
-                } else {
-                    $report .= "Статус: В работе\n";
-                }
-
-                // Добавляем разбивку по ролям для этой задачи
-                if (!empty($taskRolesTime)) {
-                    $report .= "Время по ролям:\n";
-                    foreach ($taskRolesTime as $role => $timeData) {
-                        $decimalHours = $timeData['decimal_hours'];
-                        $hours = floor($decimalHours);
-                        $minutes = round(($decimalHours - $hours) * 60);
-                        $report .= "  • $role: {$hours} ч {$minutes} м ({$decimalHours} ч)\n";
-                    }
-                } else {
-                    $report .= "Время по ролям: не найдено\n";
-                }
-
-                $report .= "\n";
-            }
-
-            $report .= "ИТОГО:\n";
-            $report .= "Всего задач: $totalTasks\n";
-            $report .= "Общее время: {$totalTime} ч\n\n";
-
-            return $report;
-
-        } catch (Exception $e) {
-            $this->logger->log("Ошибка при генерации детального отчета по задачам для проекта $projectId: " . $e->getMessage());
-            return "ДЕТАЛЬНЫЙ ОТЧЕТ ПО ЗАДАЧАМ:\n" . 
-                   str_repeat("-", 30) . "\n" .
-                   "Ошибка при получении данных: " . $e->getMessage() . "\n\n";
-        }
+        // Метод оставлен для обратной совместимости, но больше не используется
+        return "Детальный отчет по задачам отключен. Используется группировка по исполнителям.\n\n";
     }
 
     /**
