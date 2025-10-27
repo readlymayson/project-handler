@@ -1,0 +1,24 @@
+# Защита директории с документами
+Options -Indexes
+<Files "*.php">
+    Deny from all
+</Files>
+<Files "*.phtml">
+    Deny from all
+</Files>
+<Files "*.inc">
+    Deny from all
+</Files>
+
+# Разрешаем только определенные типы файлов
+<FilesMatch "\.(xlsx|xls|pdf|csv)$">
+    Allow from all
+</FilesMatch>
+
+# Настройки кэширования
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType application/vnd.openxmlformats-officedocument.spreadsheetml.sheet "access plus 1 hour"
+    ExpiresByType application/pdf "access plus 1 hour"
+    ExpiresByType text/csv "access plus 1 hour"
+</IfModule>

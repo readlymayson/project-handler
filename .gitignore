@@ -19,3 +19,7 @@ Thumbs.db
 # Временные файлы
 *.tmp
 *.temp
+
+# Внешние библиотеки
+/external_libraries/
+

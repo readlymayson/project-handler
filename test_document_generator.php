@@ -57,8 +57,11 @@ try {
     // ========================================
     testPrintCompactHeader("2. ШАБЛОНЫ ДОКУМЕНТОВ", TestColors::BLUE);
     
+    // ПРИМЕЧАНИЕ: Excel отчеты теперь генерируются через ExternalDocumentGenerator
+    echo "📝 ПРИМЕЧАНИЕ: Excel отчеты генерируются через внешние библиотеки (PhpSpreadsheet)\n";
+    echo "   Шаблон REPORT_TEMPLATE_ID больше не нужен\n\n";
+    
     $templateTests = [
-        'REPORT_TEMPLATE_ID' => REPORT_TEMPLATE_ID,
         'INVOICE_TEMPLATE_ID' => INVOICE_TEMPLATE_ID,
         'ACT_TEMPLATE_ID' => ACT_TEMPLATE_ID
     ];
