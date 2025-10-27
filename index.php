@@ -24,20 +24,25 @@ try {
     if (!file_exists('DocumentGenerator.php')) {
         throw new Exception('Файл DocumentGenerator.php не найден.');
     }
+    if (!file_exists('ExternalDocumentGenerator.php')) {
+        throw new Exception('Файл ExternalDocumentGenerator.php не найден.');
+    }
     
     require_once 'set.php';
     require_once '../require/usualClass.php';
     require_once 'class.php';
     require_once 'DealCreator.php';
     require_once 'DocumentGenerator.php';
+    require_once 'ExternalDocumentGenerator.php';
     require_once '../logger/class.php';
     $call = new Usual(BITRIX24_WEBHOOK_URL);
     $logger = new Logger('akvilon_check.log', __DIR__ . '/logs');
     $check = new ProjectCheck($call, $logger);
     
-    // Инициализируем генератор документов (работает через Bitrix24 API, без внешних библиотек)
-    $documentGenerator = new DocumentGenerator($call, $logger);
-    $dealCreator = new DealCreator($call, $logger, $documentGenerator);
+    // Инициализируем генераторы документов
+    $documentGenerator = new DocumentGenerator($call, $logger); // Устаревший (Bitrix24)
+    $externalDocumentGenerator = new ExternalDocumentGenerator($call, $logger); // Новый (внешние библиотеки)
+    $dealCreator = new DealCreator($call, $logger, $documentGenerator, $externalDocumentGenerator);
 
     $companies = $check->getCompaniesWithProjectLink();
     

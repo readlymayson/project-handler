@@ -11,10 +11,10 @@ require_once 'config.php';
  */
 class DocumentGenerator
 {
-    private Usual $call;
-    private Logger $logger;
+    private $call;
+    private $logger;
 
-    public function __construct($call, Logger $logger)
+    public function __construct($call, $logger)
     {
         $this->call = $call;
         $this->logger = $logger;
@@ -33,7 +33,6 @@ class DocumentGenerator
             'generate_on_creation' => GENERATE_ON_DEAL_CREATION,
             'generate_on_update' => GENERATE_ON_DEAL_UPDATE,
             'templates' => [
-                'report' => REPORT_TEMPLATE_ID,
                 'invoice' => INVOICE_TEMPLATE_ID,
                 'act' => ACT_TEMPLATE_ID
             ],
@@ -81,23 +80,14 @@ class DocumentGenerator
         try {
             $documents = [];
             
+            // Добавляем товары в сделку (для оригинальных шаблонов Bitrix24)
+            $this->addProductsToDeal($dealId, $projectTimeData, $company);
+            
             // Подготавливаем данные для шаблонов
             $templateData = $this->prepareTemplateData($company, $projectTimeData, $projectId);
             
-            // Генерируем отчет Excel (по шаблону REPORT_TEMPLATE_ID)
-            if (defined('REPORT_TEMPLATE_ID') && REPORT_TEMPLATE_ID > 0) {
-                $reportDoc = $this->generateDocumentFromTemplate(
-                    REPORT_TEMPLATE_ID,
-                    'Deal',
-                    $dealId,
-                    $templateData
-                );
-                if ($reportDoc) {
-                    $documents['report'] = $reportDoc;
-                }
-            }
-            
-            // Генерируем счет (по шаблону INVOICE_TEMPLATE_ID)
+            // ПРИМЕЧАНИЕ: Excel отчеты теперь генерируются через ExternalDocumentGenerator
+            // Генерируем счет/платежное поручение (по шаблону INVOICE_TEMPLATE_ID)
             if (defined('INVOICE_TEMPLATE_ID') && INVOICE_TEMPLATE_ID > 0) {
                 $invoiceDoc = $this->generateDocumentFromTemplate(
                     INVOICE_TEMPLATE_ID,
@@ -167,6 +157,15 @@ class DocumentGenerator
             
             // Добавляем дополнительные значения, если они есть
             if (!empty($values)) {
+                // Логируем данные для отладки
+                $this->logger->log([
+                    'debug' => 'Данные для шаблона',
+                    'template_id' => $templateId,
+                    'roles_data_count' => count($values['ROLES_DATA'] ?? []),
+                    'roles_data_sample' => $values['ROLES_DATA'][0] ?? 'Нет данных',
+                    'all_values_keys' => array_keys($values)
+                ]);
+                
                 $params['values'] = $values;
             }
             
@@ -243,6 +242,14 @@ class DocumentGenerator
         $rolesData = [];
         $itemNumber = 1;
         
+        // Логируем входные данные для отладки
+        $this->logger->log([
+            'debug' => 'prepareTemplateData - входные данные',
+            'project_time_data_keys' => array_keys($projectTimeData),
+            'roles_time_count' => count($projectTimeData['roles_time'] ?? []),
+            'roles_time_sample' => array_slice($projectTimeData['roles_time'] ?? [], 0, 2, true)
+        ]);
+        
         foreach ($projectTimeData['roles_time'] as $role => $timeData) {
             $rate = getRoleRate($role, $company);
             $hours = $timeData['decimal_hours'];
@@ -252,7 +259,7 @@ class DocumentGenerator
             $cleanRole = preg_replace('/ #\d+$/', '', $role);
             $cleanRole = mb_strtolower($cleanRole);
             
-            $rolesData[] = [
+            $roleData = [
                 'NUMBER' => $itemNumber,
                 'ROLE' => $cleanRole,
                 'SERVICE_NAME_INVOICE' => "Оплата услуг {$cleanRole} в {$monthName} {$year} года по приложению {$contractInfo['appendix_number']} от {$contractInfo['appendix_date']} к Договору {$contractInfo['contract_number']} от {$contractInfo['contract_date']}",
@@ -262,13 +269,44 @@ class DocumentGenerator
                 'AMOUNT' => $amount
             ];
             
+            $rolesData[] = $roleData;
+            
+            // Логируем каждую роль для отладки
+            $this->logger->log([
+                'debug' => 'prepareTemplateData - роль добавлена',
+                'role' => $role,
+                'clean_role' => $cleanRole,
+                'hours' => $hours,
+                'rate' => $rate,
+                'amount' => $amount,
+                'role_data' => $roleData
+            ]);
+            
             $itemNumber++;
         }
+        
+        // Логируем итоговый массив ROLES_DATA
+        $this->logger->log([
+            'debug' => 'prepareTemplateData - итоговый ROLES_DATA',
+            'roles_data_count' => count($rolesData),
+            'roles_data' => $rolesData
+        ]);
         
         // Получаем данные задач для отчета
         $tasksData = $this->getTasksDataForReport($projectId, $lastMonth);
         
-        return [
+        // Подготавливаем данные в формате Bitrix24 коллекций
+        $productsData = [];
+        foreach ($rolesData as $index => $role) {
+            $productsData["ProductsProduct{$index}Index"] = $role['NUMBER'];
+            $productsData["ProductsProduct{$index}Name"] = $role['SERVICE_NAME_INVOICE'];
+            $productsData["ProductsProduct{$index}Quantity"] = $role['HOURS'];
+            $productsData["ProductsProduct{$index}MeasureName"] = 'час';
+            $productsData["ProductsProduct{$index}PriceRaw"] = $role['RATE'];
+            $productsData["ProductsProduct{$index}PriceRawSum"] = $role['AMOUNT'];
+        }
+        
+        return array_merge([
             'MONTH_NAME' => $monthName,
             'YEAR' => $year,
             'CONTRACT_NUMBER' => $contractInfo['contract_number'],
@@ -277,13 +315,13 @@ class DocumentGenerator
             'APPENDIX_DATE' => $contractInfo['appendix_date'],
             'TOTAL_HOURS' => $projectTimeData['total_hours'],
             'TOTAL_COST' => $projectTimeData['total_cost'],
-            'ROLES_DATA' => $rolesData,
+            'ROLES_DATA' => $rolesData, // Оставляем для совместимости
             'TASKS_DATA' => $tasksData,
             'INVOICE_NUMBER' => $this->generateDocumentNumber('invoice', $company['ID']),
             'ACT_NUMBER' => $this->generateDocumentNumber('act', $company['ID']),
             'VAT_RATE' => VAT_RATE,
             'COMPANY_NAME' => COMPANY_NAME
-        ];
+        ], $productsData);
     }
     
     /**
@@ -428,6 +466,89 @@ class DocumentGenerator
         $prefix = ($type === 'invoice') ? INVOICE_NUMBER_PREFIX : ACT_NUMBER_PREFIX;
         $date = date('Ymd');
         return $prefix . '-' . $date . '-' . $companyId;
+    }
+
+    /**
+     * Добавляет товары в сделку для оригинальных шаблонов Bitrix24
+     */
+    private function addProductsToDeal($dealId, $projectTimeData, $company): void
+    {
+        try {
+            // Сначала очищаем существующие товары
+            $this->clearDealProducts($dealId);
+            
+            // Подготавливаем товары для добавления
+            $products = [];
+            $lastMonth = new DateTime('first day of last month');
+            $monthName = $this->getMonthNameInGenitive($lastMonth->format('n'));
+            $year = $lastMonth->format('Y');
+            $contractInfo = $this->getContractInfo($company);
+            
+            foreach ($projectTimeData['roles_time'] as $role => $timeData) {
+                $rate = getRoleRate($role, $company);
+                $hours = $timeData['decimal_hours'];
+                $amount = $hours * $rate;
+                
+                // Убираем номер из роли для наименования услуги
+                $cleanRole = preg_replace('/ #\d+$/', '', $role);
+                $cleanRole = mb_strtolower($cleanRole);
+                
+                $serviceName = "Оплата услуг {$cleanRole} в {$monthName} {$year} года по приложению {$contractInfo['appendix_number']} от {$contractInfo['appendix_date']} к Договору {$contractInfo['contract_number']} от {$contractInfo['contract_date']}";
+                
+                $products[] = [
+                    'PRODUCT_NAME' => $serviceName,
+                    'PRICE' => $rate,
+                    'QUANTITY' => $hours,
+                    'DISCOUNT_TYPE_ID' => 0,
+                    'DISCOUNT_RATE' => 0,
+                    'DISCOUNT_SUM' => 0,
+                    'TAX_RATE' => 0,
+                    'TAX_INCLUDED' => 'N'
+                ];
+            }
+            
+            // Добавляем товары в сделку
+            if (!empty($products)) {
+                apiDelay();
+                $result = $this->call->callBitrix24API('crm.deal.productrows.set', [
+                    'id' => $dealId,
+                    'rows' => $products
+                ]);
+                
+                if (isset($result['error'])) {
+                    $this->logger->log([
+                        'error' => 'Ошибка при добавлении товаров в сделку',
+                        'deal_id' => $dealId,
+                        'error_message' => $result['error_description'] ?? $result['error']
+                    ]);
+                } else {
+                    $this->logger->log([
+                        'success' => 'Товары успешно добавлены в сделку',
+                        'deal_id' => $dealId,
+                        'products_count' => count($products)
+                    ]);
+                }
+            }
+            
+        } catch (Exception $e) {
+            $this->logger->log("Ошибка при добавлении товаров в сделку $dealId: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Очищает товары в сделке
+     */
+    private function clearDealProducts($dealId): void
+    {
+        try {
+            apiDelay();
+            $this->call->callBitrix24API('crm.deal.productrows.set', [
+                'id' => $dealId,
+                'rows' => []
+            ]);
+        } catch (Exception $e) {
+            $this->logger->log("Ошибка при очистке товаров сделки $dealId: " . $e->getMessage());
+        }
     }
 
     /**

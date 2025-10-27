@@ -7,13 +7,15 @@ class DealCreator
     private Usual $call;
     private Logger $logger;
     private array $userRoleCache = []; // Кэш для ролей пользователей
-    private ?DocumentGenerator $documentGenerator = null; // Генератор документов
+    private ?DocumentGenerator $documentGenerator = null; // Генератор документов (устаревший)
+    private ?ExternalDocumentGenerator $externalDocumentGenerator = null; // Внешний генератор документов
 
-    public function __construct($call, Logger $logger, DocumentGenerator $documentGenerator = null)
+    public function __construct($call, Logger $logger, DocumentGenerator $documentGenerator = null, ExternalDocumentGenerator $externalDocumentGenerator = null)
     {
         $this->call = $call;
         $this->logger = $logger;
         $this->documentGenerator = $documentGenerator;
+        $this->externalDocumentGenerator = $externalDocumentGenerator;
     }
 
     /**
@@ -136,7 +138,34 @@ class DealCreator
 
             $newDealId = $result['result'];
             
-            // Генерируем и прикрепляем документы
+            // Генерируем документы через внешние библиотеки (Excel, CSV, PDF)
+            if ($this->externalDocumentGenerator !== null && ENABLE_EXTERNAL_DOCUMENT_GENERATOR) {
+                $documentsResult = $this->externalDocumentGenerator->generateDocumentsForDeal(
+                    $newDealId,
+                    $company,
+                    $projectTimeData,
+                    $projectId
+                );
+                
+                if ($documentsResult['status'] === 'success') {
+                    $this->logger->log([
+                        'type' => 'external_documents_generation',
+                        'status' => 'success',
+                        'deal_id' => $newDealId,
+                        'documents' => array_keys($documentsResult['documents'] ?? []),
+                        'message' => 'Документы успешно сгенерированы через внешние библиотеки'
+                    ]);
+                } else {
+                    $this->logger->log([
+                        'type' => 'external_documents_generation',
+                        'status' => 'error',
+                        'deal_id' => $newDealId,
+                        'message' => $documentsResult['message'] ?? 'Неизвестная ошибка при генерации внешних документов'
+                    ]);
+                }
+            }
+            
+            // Дополнительно генерируем документы через Bitrix24 Document Generator (PDF)
             if ($this->documentGenerator !== null && ENABLE_DOCUMENT_GENERATOR) {
                 $documentsResult = $this->documentGenerator->generateDocumentsForDeal(
                     $newDealId,
@@ -151,7 +180,7 @@ class DealCreator
                         'status' => 'success',
                         'deal_id' => $newDealId,
                         'documents' => array_keys($documentsResult['documents'] ?? []),
-                        'message' => 'Документы успешно сгенерированы и прикреплены'
+                        'message' => 'Документы успешно сгенерированы через Bitrix24 Document Generator'
                     ]);
                 } else {
                     $this->logger->log([

@@ -171,7 +171,7 @@ try {
     testPrintInfo("Проверка настроек шаблонов документов...");
     
     $templateTests = [
-        ['REPORT_TEMPLATE_ID', REPORT_TEMPLATE_ID],
+        // ['REPORT_TEMPLATE_ID', REPORT_TEMPLATE_ID], // Удален - Excel отчеты через ExternalDocumentGenerator
         ['INVOICE_TEMPLATE_ID', INVOICE_TEMPLATE_ID],
         ['ACT_TEMPLATE_ID', ACT_TEMPLATE_ID]
     ];

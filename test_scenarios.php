@@ -255,7 +255,7 @@ try {
     
     // Проверка настроек шаблонов
     $templates = [
-        'Отчет' => REPORT_TEMPLATE_ID,
+        // 'Отчет' => REPORT_TEMPLATE_ID, // Удален - Excel отчеты через ExternalDocumentGenerator
         'Счет' => INVOICE_TEMPLATE_ID,
         'Акт' => ACT_TEMPLATE_ID
     ];
