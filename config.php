@@ -39,6 +39,9 @@ define('LOG_TIME_CALCULATION', true); // Логировать расчет вр�
 define('NOTIFY_ON_DEAL_CREATION', true); // Уведомлять о создании сделок
 define('NOTIFY_USERS', [1]); // ID пользователей для уведомлений
 
+// Настройки создания задач
+define('CREATE_TASK_ON_DEAL_CREATION', true); // Создавать задачу при создании сделки
+
 // Настройки проверки дубликатов
 define('CHECK_DUPLICATES', true); // Проверять дубликаты сделок
 define('DUPLICATE_CHECK_DAYS', 30); // Период проверки дубликатов в днях
@@ -81,6 +84,10 @@ define('EXTERNAL_DOCUMENTS_OUTPUT_DIR', __DIR__ . '/generated_documents');
 
 // URL для доступа к сгенерированным документам
 define('EXTERNAL_DOCUMENTS_URL', '/generated_documents');
+
+// Базовый URL сайта для формирования полных ссылок на документы
+// Если не указан, будет определяться автоматически на основе HTTP_HOST
+define('SITE_BASE_URL', 'https://efrolov-dev.ru'); // Например: 'https://your-domain.com'
 
 // Настройки генерации различных форматов
 define('EXTERNAL_EXCEL_GENERATION', true); // Генерировать Excel отчеты через PhpSpreadsheet

@@ -173,7 +173,7 @@ class ExternalDocumentGenerator
             $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
             
             // Заголовки таблицы
-            $headers = ['Дата создания', 'Наименование задачи', 'Исполнитель', 'Часы'];
+            $headers = ['Дата создания', 'Наименование задачи', 'Исполнитель', 'Время за отчетный период'];
             $col = 'A';
             foreach ($headers as $header) {
                 $sheet->setCellValue($col . '3', $header);
@@ -430,7 +430,7 @@ class ExternalDocumentGenerator
             fwrite($file, "\xEF\xBB\xBF");
             
             // Заголовки
-            fputcsv($file, ['Дата создания', 'Наименование задачи', 'Исполнитель', 'Часы'], ';');
+            fputcsv($file, ['Дата создания', 'Наименование задачи', 'Исполнитель', 'Время за отчетный период'], ';');
             
             // Данные задач
             foreach ($documentData['TASKS_DATA'] as $task) {
@@ -749,6 +749,21 @@ class ExternalDocumentGenerator
      */
     private function getDocumentUrl($filename): string
     {
-        return EXTERNAL_DOCUMENTS_URL . '/' . $filename;
+        $relativeUrl = EXTERNAL_DOCUMENTS_URL . '/' . $filename;
+        
+        // Если указан базовый URL сайта, формируем полный URL
+        if (!empty(SITE_BASE_URL)) {
+            return rtrim(SITE_BASE_URL, '/') . $relativeUrl;
+        }
+        
+        // Если не указан, пытаемся определить автоматически
+        if (isset($_SERVER['HTTP_HOST']) && isset($_SERVER['REQUEST_SCHEME'])) {
+            $scheme = $_SERVER['REQUEST_SCHEME'] ?? 'http';
+            $host = $_SERVER['HTTP_HOST'];
+            return $scheme . '://' . $host . $relativeUrl;
+        }
+        
+        // Если не удалось определить, возвращаем относительный URL
+        return $relativeUrl;
     }
 }
