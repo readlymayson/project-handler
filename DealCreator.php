@@ -4,13 +4,13 @@ require_once 'config.php';
 
 class DealCreator
 {
-    private Usual $call;
-    private Logger $logger;
+    private $call;
+    private $logger;
     private array $userRoleCache = []; // Кэш для ролей пользователей
     private ?DocumentGenerator $documentGenerator = null; // Генератор документов (устаревший)
     private ?ExternalDocumentGenerator $externalDocumentGenerator = null; // Внешний генератор документов
 
-    public function __construct($call, Logger $logger, DocumentGenerator $documentGenerator = null, ExternalDocumentGenerator $externalDocumentGenerator = null)
+    public function __construct($call, $logger, DocumentGenerator $documentGenerator = null, ExternalDocumentGenerator $externalDocumentGenerator = null)
     {
         $this->call = $call;
         $this->logger = $logger;
@@ -57,34 +57,87 @@ class DealCreator
     }
 
     /**
-     * Проверяет, существует ли уже сделка для этого проекта в текущем месяце
+     * Проверяет, существует ли уже сделка с таким названием для данной компании в текущем месяце
+     * 
+     * @param string $dealTitle Название сделки (название проекта)
+     * @param int $companyId ID компании
+     * @return bool true если найден дубликат, false если дубликатов нет
      */
-    private function checkDuplicateDeal($projectId): bool
+    private function checkDuplicateDeal($dealTitle, $companyId): bool
     {
         if (!CHECK_DUPLICATES) {
             return false;
         }
 
+        if (empty($dealTitle)) {
+            $this->logger->log([
+                'type' => 'duplicate_check',
+                'status' => 'error',
+                'message' => 'Название сделки не указано для проверки дубликатов'
+            ]);
+            return false;
+        }
+
         try {
-            $currentDate = new DateTime();
             $firstDayOfMonth = new DateTime('first day of this month');
             $lastDayOfMonth = new DateTime('last day of this month');
 
+            // Формируем фильтр: проверяем по названию сделки И по компании
+            $filter = [
+                'CATEGORY_ID' => MONTHLY_WORK_FUNNEL_ID, // Проверяем только в воронке "Работы за предыдущий месяц"
+                'TITLE' => $dealTitle, // Точное совпадение названия
+                '>=BEGINDATE' => $firstDayOfMonth->format('Y-m-d'),
+                '<=BEGINDATE' => $lastDayOfMonth->format('Y-m-d')
+            ];
+            
+            // Если указан ID компании, добавляем фильтр по компании
+            if (!empty($companyId) && $companyId > 0) {
+                $filter['COMPANY_ID'] = $companyId;
+            }
+            
+            apiDelay();
+            
             $result = $this->call->callBitrix24API('crm.deal.list', [
-                'filter' => [
-                    'UF_CRM_PROJECT_LINK' => $projectId,
-                    '>=BEGINDATE' => $firstDayOfMonth->format('Y-m-d'),
-                    '<=BEGINDATE' => $lastDayOfMonth->format('Y-m-d'),
-                    'TITLE' => '%' . $this->getProjectInfo($projectId)['NAME'] . '%'
-                ],
-                'select' => ['ID', 'TITLE', 'BEGINDATE']
+                'filter' => $filter,
+                'select' => ['ID', 'TITLE', 'BEGINDATE', 'CATEGORY_ID', 'COMPANY_ID']
             ]);
 
             $deals = $result['result'] ?? [];
-            return !empty($deals);
+            $hasDuplicates = !empty($deals);
+            
+            if ($hasDuplicates) {
+                $this->logger->log([
+                    'type' => 'duplicate_check',
+                    'status' => 'found',
+                    'deal_title' => $dealTitle,
+                    'company_id' => $companyId,
+                    'funnel_id' => MONTHLY_WORK_FUNNEL_ID,
+                    'duplicates_count' => count($deals),
+                    'duplicates' => $deals,
+                    'message' => "Найдены дубликаты сделок с названием '$dealTitle' для компании $companyId в воронке " . MONTHLY_WORK_FUNNEL_ID
+                ]);
+            } else {
+                $this->logger->log([
+                    'type' => 'duplicate_check',
+                    'status' => 'no_duplicates',
+                    'deal_title' => $dealTitle,
+                    'company_id' => $companyId,
+                    'funnel_id' => MONTHLY_WORK_FUNNEL_ID,
+                    'message' => "Дубликаты не найдены для сделки '$dealTitle' компании $companyId"
+                ]);
+            }
+            
+            return $hasDuplicates;
 
         } catch (Exception $e) {
-            $this->logger->log("Ошибка при проверке дубликатов для проекта $projectId: " . $e->getMessage());
+            $this->logger->log([
+                'type' => 'duplicate_check',
+                'status' => 'error',
+                'deal_title' => $dealTitle,
+                'company_id' => $companyId,
+                'funnel_id' => MONTHLY_WORK_FUNNEL_ID,
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
     }
@@ -107,14 +160,6 @@ class DealCreator
                 throw new Exception("У компании $originalCompanyId не указана ссылка на проект или не удалось извлечь ID проекта");
             }
 
-            // Проверяем на дубликаты
-            if ($this->checkDuplicateDeal($projectId)) {
-                return [
-                    'status' => 'duplicate',
-                    'message' => "Сделка для проекта $projectId уже существует в текущем месяце"
-                ];
-            }
-
             // Получаем информацию о проекте
             $projectInfo = $this->getProjectInfo($projectId);
             if (empty($projectInfo)) {
@@ -123,6 +168,16 @@ class DealCreator
 
             // Получаем информацию о клиентах и компании
             $clientInfo = $this->getClientInfo($originalCompanyId);
+            
+            $dealTitle = $projectInfo['NAME'] ?? '';
+            
+            // Проверяем на дубликаты по названию сделки и компании
+            if ($this->checkDuplicateDeal($dealTitle, $originalCompanyId)) {
+                return [
+                    'status' => 'duplicate',
+                    'message' => "Сделка с названием '$dealTitle' для компании $originalCompanyId уже существует в текущем месяце"
+                ];
+            }
             
             // Формируем данные для новой сделки
             $dealData = $this->prepareDealData($company, $projectInfo, $clientInfo, $projectTimeData);
@@ -155,6 +210,9 @@ class DealCreator
                         'documents' => array_keys($documentsResult['documents'] ?? []),
                         'message' => 'Документы успешно сгенерированы через внешние библиотеки'
                     ]);
+                    
+                    // Добавляем ссылки на Excel и CSV файлы в комментарий таймлайна
+                    $this->addDocumentsLinksToTimeline($newDealId, $documentsResult['documents'] ?? []);
                 } else {
                     $this->logger->log([
                         'type' => 'external_documents_generation',
@@ -197,6 +255,23 @@ class DealCreator
                 $this->sendDealCreationNotification($newDealId, $projectInfo['NAME'], $projectTimeData);
             }
             
+            // Создаем задачу для обработки проекта
+            $taskResult = null;
+            if (CREATE_TASK_ON_DEAL_CREATION) {
+                $taskResult = $this->createTaskForDeal($newDealId, $projectId, $projectInfo['NAME'], $dealData['CLOSEDATE'], $dealData['ASSIGNED_BY_ID']);
+                if ($taskResult && $taskResult['status'] === 'success') {
+                    $this->logger->log([
+                        'type' => 'task_creation',
+                        'status' => 'success',
+                        'deal_id' => $newDealId,
+                        'task_id' => $taskResult['task_id'],
+                        'project_id' => $projectId,
+                        'deadline' => $dealData['CLOSEDATE'],
+                        'message' => 'Задача успешно создана для сделки'
+                    ]);
+                }
+            }
+            
             $this->logger->log([
                 'type' => 'deal_creation',
                 'status' => 'success',
@@ -208,6 +283,7 @@ class DealCreator
                 'total_hours' => $projectTimeData['total_hours'],
                 'total_cost' => $projectTimeData['total_cost'],
                 'assigned_by_id' => $company['ASSIGNED_BY_ID'] ?? 1,
+                'task_id' => $taskResult['task_id'] ?? null,
                 'message' => 'Сделка "Работы за предыдущий месяц" успешно создана в воронке ' . MONTHLY_WORK_FUNNEL_ID . ', ответственный: ' . ($company['ASSIGNED_BY_ID'] ?? 1)
             ]);
 
@@ -215,6 +291,7 @@ class DealCreator
             return [
                 'status' => 'success',
                 'deal_id' => $newDealId,
+                'task_id' => $taskResult['task_id'] ?? null,
                 'message' => 'Сделка успешно создана'
             ];
 
@@ -957,6 +1034,136 @@ class DealCreator
 
         } catch (Exception $e) {
             $this->logger->log("Ошибка при отправке уведомления о создании сделки $dealId: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Создает задачу для обработки проекта после создания сделки
+     * 
+     * @param int $dealId ID созданной сделки
+     * @param int $projectId ID проекта
+     * @param string $projectName Название проекта
+     * @param string $deadline Крайний срок (дата в формате Y-m-d)
+     * @param int $responsibleId ID ответственного
+     * @return array Результат создания задачи
+     */
+    private function createTaskForDeal($dealId, $projectId, $projectName, $deadline, $responsibleId): array
+    {
+        try {
+            // Добавляем задержку перед API вызовом
+            apiDelay();
+            
+            $taskTitle = "Обработать проект " . $projectName;
+            $taskDescription = "Необходимо обработать проект после создания сделки \"Работы за предыдущий месяц\".\n\n"
+                . "Ссылка на сделку: https://akvilon-marketing.bitrix24.ru/crm/deal/details/$dealId/\n"
+                . "Проект: https://akvilon-marketing.bitrix24.ru/workgroups/group/$projectId/";
+            
+            $result = $this->call->callBitrix24API('tasks.task.add', [
+                'fields' => [
+                    'TITLE' => $taskTitle,
+                    'DESCRIPTION' => $taskDescription,
+                    'RESPONSIBLE_ID' => $responsibleId,
+                    'CREATED_BY' => 1, // Администратор как создатель
+                    'DEADLINE' => $deadline, // Крайний срок такой же, как у сделки
+                    'UF_CRM_TASK' => ['D_' . $dealId], // Привязка к сделке
+                ],
+            ]);
+
+            if (empty($result['result'])) {
+                throw new Exception("Ошибка при создании задачи: " . json_encode($result));
+            }
+
+            return [
+                'status' => 'success',
+                'task_id' => $result['result']['task']['id'] ?? $result['result']['id'] ?? null,
+                'message' => 'Задача успешно создана'
+            ];
+
+        } catch (Exception $e) {
+            $this->logger->log([
+                'type' => 'task_creation',
+                'status' => 'error',
+                'deal_id' => $dealId,
+                'project_id' => $projectId,
+                'message' => 'Ошибка при создании задачи: ' . $e->getMessage()
+            ]);
+            
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Добавляет ссылки на Excel и CSV файлы в комментарий таймлайна сделки
+     * 
+     * @param int $dealId ID сделки
+     * @param array $documents Массив сгенерированных документов
+     * @return void
+     */
+    private function addDocumentsLinksToTimeline($dealId, array $documents): void
+    {
+        try {
+            $links = [];
+            
+            // Проверяем наличие Excel файла
+            if (isset($documents['excel_report']) && !empty($documents['excel_report']['url'])) {
+                $excelUrl = $documents['excel_report']['url'];
+                $excelFilename = $documents['excel_report']['filename'] ?? 'report.xlsx';
+                $bbCodeUrl = $excelUrl;
+                $bbCodeFilename = $excelFilename;
+                $links[] = "[url=" . $bbCodeUrl . "]" . $bbCodeFilename . "[/url]";
+            }
+            
+            // Проверяем наличие CSV файла
+            if (isset($documents['csv_report']) && !empty($documents['csv_report']['url'])) {
+                $csvUrl = $documents['csv_report']['url'];
+                $csvFilename = $documents['csv_report']['filename'] ?? 'report.csv';
+                $bbCodeUrl = $csvUrl;
+                $bbCodeFilename = $csvFilename;
+                $links[] = "[url=" . $bbCodeUrl . "]" . $bbCodeFilename . "[/url]";
+            }
+            
+            // Если есть хотя бы одна ссылка, добавляем комментарий
+            if (!empty($links)) {
+                apiDelay();
+                
+                $commentText = "Сгенерированы отчеты:\n" . implode("\n", $links);
+                
+                $result = $this->call->callBitrix24API('crm.timeline.comment.add', [
+                    'fields' => [
+                        'ENTITY_ID' => $dealId,
+                        'ENTITY_TYPE' => 'deal',
+                        'COMMENT' => $commentText
+                    ]
+                ]);
+                
+                if (isset($result['result']) && !empty($result['result'])) {
+                    $this->logger->log([
+                        'type' => 'timeline_comment',
+                        'status' => 'success',
+                        'deal_id' => $dealId,
+                        'comment_id' => $result['result'],
+                        'message' => 'Ссылки на документы добавлены в таймлайн сделки'
+                    ]);
+                } else {
+                    $this->logger->log([
+                        'type' => 'timeline_comment',
+                        'status' => 'error',
+                        'deal_id' => $dealId,
+                        'message' => 'Не удалось добавить комментарий в таймлайн: ' . json_encode($result)
+                    ]);
+                }
+            }
+            
+        } catch (Exception $e) {
+            $this->logger->log([
+                'type' => 'timeline_comment',
+                'status' => 'error',
+                'deal_id' => $dealId,
+                'message' => 'Ошибка при добавлении ссылок в таймлайн: ' . $e->getMessage()
+            ]);
         }
     }
 }
