@@ -23,3 +23,11 @@ Thumbs.db
 # Внешние библиотеки
 /external_libraries/
 
+# Секреты и локальные конфигурации (НЕ коммитить!)
+/set.local.php
+/config.local.php
+*.env
+.env
+.env.*
+!.env.example
+
